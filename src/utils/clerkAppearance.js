@@ -1,0 +1,50 @@
+export const stayEaseClerkAppearance = {
+  layout: {
+    socialButtonsPlacement: 'top',
+    socialButtonsVariant: 'blockButton',
+    logoPlacement: 'none',
+  },
+  variables: {
+    colorPrimary: '#C6A15B',
+    colorText: '#142B45',
+    colorTextSecondary: '#64748B',
+    colorBackground: '#FFFFFF',
+    colorInputBackground: '#FFFFFF',
+    colorInputBorder: '#E2E8F0',
+    colorInputText: '#142B45',
+    colorSuccess: '#10B981',
+    colorDanger: '#EF4444',
+    borderRadius: '0.75rem',
+    fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif',
+    fontSize: '0.9375rem',
+  },
+  elements: {
+    rootBox: 'w-full flex justify-center',
+    card: 'shadow-2xl border border-slate-100 rounded-2xl p-6 sm:p-8 bg-white/95 backdrop-blur-sm w-full max-w-md',
+    headerTitle: 'text-2xl font-bold text-[#142B45] tracking-tight font-serif',
+    headerSubtitle: 'text-slate-500 text-sm mt-1 leading-relaxed',
+    socialButtonsBlockButton:
+      'border border-slate-200 hover:border-[#C6A15B] hover:bg-[#F5F7FA] transition-all rounded-xl py-2.5 font-medium text-[#142B45] shadow-xs',
+    socialButtonsBlockButtonText: 'font-medium text-[#142B45] text-sm',
+    socialButtonsProviderIcon: 'mr-2',
+    dividerLine: 'bg-slate-200',
+    dividerText: 'text-xs uppercase text-slate-400 font-semibold tracking-wider',
+    formButtonPrimary:
+      'bg-[#C6A15B] hover:bg-[#b58f4a] text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg transition-all tracking-wide text-sm active:scale-[0.99]',
+    formFieldLabel: 'text-xs font-semibold text-[#142B45] uppercase tracking-wider mb-1.5',
+    formFieldInput:
+      'rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-[#142B45] focus:ring-2 focus:ring-[#C6A15B]/25 focus:border-[#C6A15B] transition-all placeholder:text-slate-400',
+    formFieldAction: 'text-xs font-semibold text-[#C6A15B] hover:text-[#b58f4a] transition-colors',
+    footerActionLink:
+      'text-[#C6A15B] hover:text-[#b58f4a] font-semibold transition-colors underline-offset-4 hover:underline',
+    footerActionText: 'text-slate-600 text-sm',
+    identityPreviewText: 'text-[#142B45] font-medium',
+    identityPreviewEditButton: 'text-[#C6A15B] hover:text-[#b58f4a]',
+    formResendCodeLink: 'text-[#C6A15B] hover:text-[#b58f4a] font-medium',
+    otpCodeFieldInput: 'border-slate-300 focus:border-[#C6A15B] focus:ring-[#C6A15B]',
+    userButtonAvatarBox: 'w-10 h-10 border-2 border-[#C6A15B] shadow-sm',
+    userButtonPopoverCard: 'shadow-2xl border border-slate-100 rounded-2xl bg-white',
+    userPreviewMainIdentifier: 'font-bold text-[#142B45]',
+    userPreviewSecondaryIdentifier: 'text-slate-500 text-xs',
+  },
+}
