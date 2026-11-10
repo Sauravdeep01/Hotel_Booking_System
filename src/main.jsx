@@ -18,8 +18,8 @@ createRoot(document.getElementById('root')).render(
       publishableKey={PUBLISHABLE_KEY}
       appearance={stayEaseClerkAppearance}
       afterSignOutUrl="/login"
-      signInFallbackRedirectUrl="/dashboard"
-      signUpFallbackRedirectUrl="/dashboard"
+      signInFallbackRedirectUrl="/home"
+      signUpFallbackRedirectUrl="/home"
     >
       <BrowserRouter>
         <App />

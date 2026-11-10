@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import Dashboard from './pages/Dashboard'
+import Home from './pages/Home'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
@@ -14,7 +14,7 @@ export default function App() {
         element={
           <>
             <SignedIn>
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/home" replace />
             </SignedIn>
             <SignedOut>
               <Navigate to="/login" replace />
@@ -31,15 +31,23 @@ export default function App() {
 
       {/* Protected routes */}
       <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Home />
           </ProtectedRoute>
         }
       />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   )
 }

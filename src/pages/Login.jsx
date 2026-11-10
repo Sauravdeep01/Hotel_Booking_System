@@ -9,8 +9,8 @@ export default function Login() {
         path="/login"
         routing="path"
         signUpUrl="/signup"
-        fallbackRedirectUrl="/dashboard"
-        signUpFallbackRedirectUrl="/dashboard"
+        fallbackRedirectUrl="/home"
+        signUpFallbackRedirectUrl="/home"
         appearance={stayEaseClerkAppearance}
       />
     </AuthLayout>

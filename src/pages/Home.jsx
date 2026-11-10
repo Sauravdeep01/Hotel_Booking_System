@@ -1,0 +1,17 @@
+import Navbar from '../components/common/Navbar'
+import Footer from '../components/common/Footer'
+import HeroSection from '../components/home/HeroSection'
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-[#F5F7FA] text-[#142B45] flex flex-col justify-between">
+      <Navbar />
+
+      <main className="flex-1">
+        <HeroSection />
+      </main>
+
+      <Footer />
+    </div>
+  )
+}
