@@ -1,5 +1,18 @@
 import { useState } from 'react'
-import { Calendar, Users, ShieldCheck, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth, useClerk } from '@clerk/clerk-react'
+import {
+  Calendar,
+  Users,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Sparkles,
+  ArrowRight,
+  Lock,
+} from 'lucide-react'
+import { savePendingBooking } from '../../utils/bookingStorage'
 
 // Static date baseline outside component for render purity
 const TODAY_STR = new Date().toISOString().split('T')[0]
@@ -10,12 +23,14 @@ const getTomorrowStr = () => {
 }
 
 export default function AvailabilityCard({ hotel }) {
+  const navigate = useNavigate()
+  const { isSignedIn } = useAuth()
+  const { openSignIn } = useClerk()
   const [checkIn, setCheckIn] = useState(TODAY_STR)
   const [checkOut, setCheckOut] = useState(getTomorrowStr)
   const [guests, setGuests] = useState('2 Guests')
   const [isChecking, setIsChecking] = useState(false)
   const [statusMessage, setStatusMessage] = useState(null)
-  const [isAvailable, setIsAvailable] = useState(null)
 
   // Calculate nights
   const calculateNights = () => {
@@ -33,35 +48,63 @@ export default function AvailabilityCard({ hotel }) {
   const taxesFees = Math.round(basePrice * 0.1)
   const totalPrice = basePrice - discountAmount + taxesFees
 
-  const handleCheckAvailability = (e) => {
-    e.preventDefault()
-
-    // Validate dates
+  const validateDates = () => {
     if (!checkIn || !checkOut) {
       setStatusMessage({ type: 'error', text: 'Please select both check-in and check-out dates.' })
-      setIsAvailable(false)
-      return
+      return false
     }
 
     if (new Date(checkOut) <= new Date(checkIn)) {
       setStatusMessage({ type: 'error', text: 'Check-out date must be strictly after check-in date.' })
-      setIsAvailable(false)
-      return
+      return false
     }
+
+    return true
+  }
+
+  const handleCheckAvailability = (e) => {
+    e.preventDefault()
+    if (!validateDates()) return
 
     setIsChecking(true)
     setStatusMessage(null)
-    setIsAvailable(null)
 
     // Simulate backend availability inquiry
     setTimeout(() => {
       setIsChecking(false)
-      setIsAvailable(true)
       setStatusMessage({
         type: 'success',
         text: `Suite is available for ${nights} ${nights === 1 ? 'night' : 'nights'}! 2 suites remaining at this rate.`,
       })
-    }, 700)
+    }, 600)
+  }
+
+  const handleProceedToBooking = () => {
+    if (!validateDates()) return
+
+    const bookingParams = {
+      hotelId: hotel.id,
+      checkIn,
+      checkOut,
+      guests,
+      roomType: hotel.roomDetails?.type || hotel.roomType,
+      nights,
+      totalPrice,
+    }
+
+    const targetUrl = `/booking/confirm?hotelId=${hotel.id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${encodeURIComponent(guests)}`
+
+    if (!isSignedIn) {
+      // Unauthenticated: save pending booking and open Clerk prebuilt SignIn modal
+      savePendingBooking(bookingParams)
+      openSignIn({
+        fallbackRedirectUrl: targetUrl,
+        forceRedirectUrl: targetUrl,
+      })
+    } else {
+      // Authenticated: proceed directly to confirmation
+      navigate(targetUrl)
+    }
   }
 
   return (
@@ -103,7 +146,6 @@ export default function AvailabilityCard({ hotel }) {
               value={checkIn}
               onChange={(e) => {
                 setCheckIn(e.target.value)
-                setIsAvailable(null)
                 setStatusMessage(null)
               }}
               className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
@@ -122,7 +164,6 @@ export default function AvailabilityCard({ hotel }) {
               value={checkOut}
               onChange={(e) => {
                 setCheckOut(e.target.value)
-                setIsAvailable(null)
                 setStatusMessage(null)
               }}
               className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
@@ -140,7 +181,6 @@ export default function AvailabilityCard({ hotel }) {
             value={guests}
             onChange={(e) => {
               setGuests(e.target.value)
-              setIsAvailable(null)
               setStatusMessage(null)
             }}
             className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
@@ -216,15 +256,24 @@ export default function AvailabilityCard({ hotel }) {
         </div>
       </div>
 
-      {/* Action Button once verified */}
-      {isAvailable && (
+      {/* Reservation CTA Action */}
+      <div className="mt-5 space-y-2">
         <button
-          onClick={() => alert(`Availability verified! Booking flow for ${hotel.name} will be connected to the booking engine.`)}
-          className="mt-4 w-full bg-[#142B45] hover:bg-[#1D3D60] text-white font-semibold py-3.5 rounded-2xl text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
+          type="button"
+          onClick={handleProceedToBooking}
+          className="w-full flex items-center justify-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white font-semibold py-3.5 px-6 rounded-2xl text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
         >
-          Reserve This Suite
+          <span>Reserve & Book Suite</span>
+          <ArrowRight className="h-4 w-4" />
         </button>
-      )}
+
+        {!isSignedIn && (
+          <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
+            <Lock className="h-3 w-3 text-[#C6A15B]" />
+            <span>Sign-in required to confirm • Dates will be preserved</span>
+          </p>
+        )}
+      </div>
 
       {/* Security Assurance */}
       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-400">

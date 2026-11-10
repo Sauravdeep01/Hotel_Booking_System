@@ -1,108 +1,55 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { SignedIn, SignedOut } from '@clerk/clerk-react'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
 import Home from './pages/Home'
 import Hotels from './pages/Hotels'
 import HotelDetails from './pages/HotelDetails'
+import BookingConfirm from './pages/BookingConfirm'
+import MyBookings from './pages/MyBookings'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route
-        path="/"
-        element={
-          <>
-            <SignedIn>
-              <Navigate to="/home" replace />
-            </SignedIn>
-            <SignedOut>
-              <Navigate to="/login" replace />
-            </SignedOut>
-          </>
-        }
-      />
+      {/* Public Pages - Accessible to all visitors without login */}
+      <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="/hotels" element={<Hotels />} />
+      <Route path="/hotels/:id" element={<HotelDetails />} />
+      <Route path="/hotel/:id" element={<HotelDetails />} />
+      <Route path="/offers" element={<Home />} />
+      <Route path="/offers/:id" element={<Home />} />
+      <Route path="/experience" element={<Home />} />
+      <Route path="/about" element={<Home />} />
 
-      {/* Auth routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/login/*" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/signup/*" element={<Signup />} />
+      {/* Redirect obsolete auth routes to homepage */}
+      <Route path="/login" element={<Navigate to="/home" replace />} />
+      <Route path="/login/*" element={<Navigate to="/home" replace />} />
+      <Route path="/signup" element={<Navigate to="/home" replace />} />
+      <Route path="/signup/*" element={<Navigate to="/home" replace />} />
 
-      {/* Protected routes */}
+      {/* Protected Routes - Accessible only to authenticated users */}
       <Route
-        path="/home"
+        path="/booking/confirm"
         element={
           <ProtectedRoute>
-            <Home />
+            <BookingConfirm />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/bookings"
+        element={
+          <ProtectedRoute>
+            <MyBookings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-bookings"
+        element={<Navigate to="/bookings" replace />}
       />
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hotels"
-        element={
-          <ProtectedRoute>
-            <Hotels />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hotels/:id"
-        element={
-          <ProtectedRoute>
-            <HotelDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hotel/:id"
-        element={
-          <ProtectedRoute>
-            <HotelDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/offers"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/offers/:id"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/experience"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/about"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/bookings" replace />}
       />
 
       <Route path="*" element={<Navigate to="/home" replace />} />

@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')).render(
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
       appearance={stayEaseClerkAppearance}
-      afterSignOutUrl="/login"
+      afterSignOutUrl="/home"
       signInFallbackRedirectUrl="/home"
       signUpFallbackRedirectUrl="/home"
     >

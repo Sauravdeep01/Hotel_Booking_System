@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { UserButton, SignedIn, SignedOut } from '@clerk/clerk-react'
-import { Hotel, Search, Menu, X, LogIn } from 'lucide-react'
+import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react'
+import { Hotel, Search, Menu, X, LogIn, BookmarkCheck } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { stayEaseClerkAppearance } from '../../utils/clerkAppearance'
 
@@ -120,30 +120,54 @@ export default function Navbar() {
             <Search className="h-4 w-4" />
           </Link>
 
-          {/* User signed in: Clerk UserButton */}
+          {/* User signed in: My Bookings & Clerk UserButton */}
           <SignedIn>
+            <Link
+              to="/bookings"
+              className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-all ${
+                location.pathname === '/bookings'
+                  ? 'bg-[#C6A15B] text-white border-[#C6A15B] shadow-xs'
+                  : isSolid
+                    ? 'border-slate-200 text-[#142B45] hover:text-[#C6A15B] hover:border-[#C6A15B] bg-slate-50'
+                    : 'border-white/20 text-white hover:text-[#C6A15B] hover:border-[#C6A15B] bg-white/10'
+              }`}
+            >
+              <BookmarkCheck className="h-3.5 w-3.5 text-[#C6A15B]" />
+              <span>My Bookings</span>
+            </Link>
+
             <div className="flex items-center pl-1">
               <UserButton
                 appearance={stayEaseClerkAppearance}
                 userProfileMode="modal"
-                fallbackRedirectUrl="/login"
-              />
+                fallbackRedirectUrl="/home"
+              >
+                <UserButton.MenuItems>
+                  <UserButton.Link
+                    label="My Bookings"
+                    labelIcon={<BookmarkCheck className="h-4 w-4 text-[#C6A15B]" />}
+                    href="/bookings"
+                  />
+                </UserButton.MenuItems>
+              </UserButton>
             </div>
           </SignedIn>
 
-          {/* User signed out: Login Button */}
+          {/* User signed out: Prebuilt Clerk SignIn Modal Button */}
           <SignedOut>
-            <Link
-              to="/login"
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-sm active:scale-95 ${
-                isSolid
-                  ? 'bg-[#142B45] hover:bg-[#1D3D60] text-white'
-                  : 'bg-[#C6A15B] hover:bg-[#b58f4a] text-white shadow-[#C6A15B]/30'
-              }`}
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              <span>Login</span>
-            </Link>
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer ${
+                  isSolid
+                    ? 'bg-[#142B45] hover:bg-[#1D3D60] text-white'
+                    : 'bg-[#C6A15B] hover:bg-[#b58f4a] text-white shadow-[#C6A15B]/30'
+                }`}
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Login</span>
+              </button>
+            </SignInButton>
           </SignedOut>
 
           {/* Mobile Menu Hamburger Toggle */}
@@ -184,15 +208,37 @@ export default function Navbar() {
               )
             })}
 
-            <SignedOut>
+            <SignedIn>
               <Link
-                to="/login"
+                to="/bookings"
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-2 flex items-center justify-center gap-2 w-full bg-[#142B45] hover:bg-[#C6A15B] text-white py-2.5 rounded-xl font-semibold text-sm transition-all"
+                className={`text-base font-semibold py-2 border-b border-slate-100 transition-colors flex items-center justify-between ${
+                  location.pathname === '/bookings'
+                    ? 'text-[#C6A15B]'
+                    : 'text-[#142B45] hover:text-[#C6A15B]'
+                }`}
               >
-                <LogIn className="h-4 w-4" />
-                <span>Login to StayEase</span>
+                <div className="flex items-center gap-2">
+                  <BookmarkCheck className="h-4 w-4 text-[#C6A15B]" />
+                  <span>My Bookings</span>
+                </div>
+                {location.pathname === '/bookings' && (
+                  <span className="h-2 w-2 rounded-full bg-[#C6A15B]" />
+                )}
               </Link>
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-2 flex items-center justify-center gap-2 w-full bg-[#142B45] hover:bg-[#C6A15B] text-white py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Login to StayEase</span>
+                </button>
+              </SignInButton>
             </SignedOut>
           </nav>
         </div>

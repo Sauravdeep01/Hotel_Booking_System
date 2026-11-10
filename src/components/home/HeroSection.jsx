@@ -1,10 +1,16 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MapPin, Calendar, Users, Search, Star, Sparkles, ShieldCheck } from 'lucide-react'
 import { IMAGES } from '../../constants/images'
 
 export default function HeroSection() {
+  const navigate = useNavigate()
   const [destination, setDestination] = useState('')
   const [guests, setGuests] = useState('2 Guests')
+
+  const handleSearch = () => {
+    navigate('/hotels')
+  }
 
   return (
     <section className="relative min-h-[580px] sm:min-h-[640px] flex items-center justify-center overflow-hidden bg-[#142B45] text-white">
@@ -99,7 +105,11 @@ export default function HeroSection() {
 
             {/* Search Button */}
             <div className="sm:col-span-3 lg:col-span-1">
-              <button className="w-full flex items-center justify-center gap-2 bg-[#C6A15B] hover:bg-[#b58f4a] text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98]">
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="w-full flex items-center justify-center gap-2 bg-[#C6A15B] hover:bg-[#b58f4a] text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+              >
                 <Search className="h-4 w-4" />
                 <span className="text-sm">Search</span>
               </button>
