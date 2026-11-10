@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import { UserButton, SignedIn, SignedOut } from '@clerk/clerk-react'
 import { Hotel, Search, Menu, X, LogIn } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { stayEaseClerkAppearance } from '../../utils/clerkAppearance'
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const location = useLocation()
+
+  const isHomePage = location.pathname === '/home' || location.pathname === '/'
+  const isSolid = isScrolled || !isHomePage
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,7 +37,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
-        isScrolled
+        isSolid
           ? 'bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
           : 'bg-transparent backdrop-blur-[3px] border-b border-white/10 shadow-none'
       }`}
@@ -48,7 +52,7 @@ export default function Navbar() {
           >
             <div
               className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl shadow-md transition-all duration-300 shrink-0 ${
-                isScrolled
+                isSolid
                   ? 'bg-gradient-to-br from-[#142B45] to-[#1D3D60] text-[#C6A15B] ring-2 ring-[#C6A15B]/25'
                   : 'bg-gradient-to-br from-[#C6A15B] to-[#9E7B36] text-white ring-2 ring-white/20'
               }`}
@@ -60,7 +64,7 @@ export default function Navbar() {
               <div className="flex items-center gap-1.5">
                 <span
                   className={`font-serif text-lg sm:text-xl font-bold tracking-tight transition-colors duration-300 ${
-                    isScrolled ? 'text-[#142B45]' : 'text-white'
+                    isSolid ? 'text-[#142B45]' : 'text-white'
                   }`}
                 >
                   StayEase
@@ -81,7 +85,7 @@ export default function Navbar() {
               key={link.label}
               to={link.path}
               className={`text-sm font-semibold tracking-wide transition-colors duration-200 hover:text-[#C6A15B] whitespace-nowrap ${
-                isScrolled ? 'text-[#142B45]' : 'text-white'
+                isSolid ? 'text-[#142B45]' : 'text-white'
               }`}
             >
               {link.label}
@@ -96,7 +100,7 @@ export default function Navbar() {
             to="/hotels"
             aria-label="Search destinations"
             className={`p-2 rounded-xl border transition-all duration-300 ${
-              isScrolled
+              isSolid
                 ? 'border-slate-200 text-slate-700 hover:text-[#142B45] hover:border-[#C6A15B] hover:bg-slate-50'
                 : 'border-white/20 text-white hover:text-[#C6A15B] hover:border-[#C6A15B] bg-white/10 hover:bg-white/15 backdrop-blur-xs'
             }`}
@@ -120,7 +124,7 @@ export default function Navbar() {
             <Link
               to="/login"
               className={`flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-sm active:scale-95 ${
-                isScrolled
+                isSolid
                   ? 'bg-[#142B45] hover:bg-[#1D3D60] text-white'
                   : 'bg-[#C6A15B] hover:bg-[#b58f4a] text-white shadow-[#C6A15B]/30'
               }`}
@@ -135,7 +139,7 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Navigation Menu"
             className={`md:hidden p-2 rounded-xl border transition-colors ${
-              isScrolled
+              isSolid
                 ? 'border-slate-200 text-[#142B45]'
                 : 'border-white/20 text-white bg-white/10'
             }`}
