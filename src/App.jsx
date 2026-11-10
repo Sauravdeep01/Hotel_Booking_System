@@ -46,6 +46,22 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/hotels"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hotel/:id"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

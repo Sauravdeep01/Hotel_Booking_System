@@ -1,6 +1,7 @@
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
 import HeroSection from '../components/home/HeroSection'
+import FeaturedDestinations from '../components/home/FeaturedDestinations'
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
 
       <main className="flex-1">
         <HeroSection />
+        <FeaturedDestinations />
       </main>
 
       <Footer />
