@@ -78,6 +78,22 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/experience"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
