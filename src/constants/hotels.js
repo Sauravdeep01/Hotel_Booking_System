@@ -525,4 +525,468 @@ export const FEATURED_HOTELS = [
       },
     ],
   },
+  {
+    id: 5,
+    name: 'Villa Bellissima Cliff',
+    roomType: 'Grand Cliff Panorama Suite • King Bed',
+    discount: '15% OFF',
+    rating: 4.9,
+    reviewsCount: 114,
+    price: 520,
+    priceCurrency: '$',
+    priceUnit: 'night',
+    location: 'Positano, Amalfi Coast, Italy',
+    fullAddress: 'Via Cristoforo Colombo 84, 84017 Positano, Salerno, Italy',
+    isBestSeller: true,
+    image: IMAGES.hotels.amalfiCliff,
+    gallery: IMAGES.hotelGalleries.amalfiCliff,
+    tagline: 'Dramatic Mediterranean Cliffs & Unrivaled Elegance',
+    shortDescription:
+      'Carved majestically into the vertical sun-kissed cliffs of Positano, featuring private bougainvillea terraces, heated sea-water plunge pools, and private yacht charters along the Capri coastline.',
+    facilityHighlights: [
+      {
+        title: '24/7 Room Service',
+        description: 'Bespoke Italian dining & local prosecco served on your cliffside terrace',
+        iconName: 'BellRing',
+      },
+      {
+        title: 'Cliffside Sea View',
+        description: 'Unobstructed panorama across the Mediterranean and Positano village',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Private Infinity Plunge',
+        description: 'Heated cliff-edge plunge pool with submerged sun loungers',
+        iconName: 'Sparkles',
+      },
+    ],
+    about:
+      'Villa Bellissima Cliff is an architectural triumph perched on the dramatic rocky slopes of Positano. Combining traditional whitewashed arches with contemporary Italian craftsmanship, each suite offers direct vistas of colorful terraced houses cascading into the sparkling Mediterranean sea. Guests enjoy private beach club access and sunset yacht excursions.',
+    roomDetails: {
+      type: 'Cliffside Panorama Suite',
+      bedType: '1 Extra-Wide King Bed',
+      capacity: 'Up to 2 Guests',
+      size: '135 m² (1,450 sq ft)',
+      features: [
+        'Expansive private terrace with bougainvillea pergola',
+        'Outdoor heated hydrotherapy plunge pool',
+        'Custom hand-painted Vietri ceramic tiles',
+        'Acqua di Parma luxury toiletries & robes',
+        'Complimentary Riva speed-boat transfer',
+      ],
+    },
+    amenities: [
+      {
+        title: 'Clean & Safe Stay',
+        description: 'European luxury hospital-grade hygiene certification',
+        iconName: 'ShieldCheck',
+      },
+      {
+        title: 'Enhanced Cleaning',
+        description: 'Daily sanitization & evening scented pillow mist service',
+        iconName: 'Sparkles',
+      },
+      {
+        title: 'Excellent Location',
+        description: 'Rated 9.9/10 for dramatic sea and sunset views',
+        iconName: 'MapPin',
+      },
+      {
+        title: 'Smooth Check-In',
+        description: 'VIP luggage porterage & Bellini cocktail greeting',
+        iconName: 'KeyRound',
+      },
+      {
+        title: 'Free High-Speed Wi-Fi',
+        description: 'High-speed gigabit Wi-Fi across terraces',
+        iconName: 'Wifi',
+      },
+      {
+        title: 'Swimming Pool',
+        description: 'Cliff-edge infinity pool overlooking the bay',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Valet Parking',
+        description: 'Secure cliffside garage with complimentary valet',
+        iconName: 'Car',
+      },
+      {
+        title: 'Rooftop Restaurant',
+        description: 'Michelin-starred seaside dining with catch of the day',
+        iconName: 'UtensilsCrossed',
+      },
+      {
+        title: 'Climate Control',
+        description: 'Whisper-quiet multi-zone cooling',
+        iconName: 'Wind',
+      },
+    ],
+    houseRules: {
+      checkIn: '15:00 PM onwards',
+      checkOut: 'Until 11:30 AM',
+      cancellation: 'Free cancellation up to 5 days before arrival.',
+      smoking: 'Outdoor terrace only.',
+      pets: 'Small pets allowed upon prior request.',
+    },
+    reviews: [
+      {
+        id: 1,
+        author: 'Sophia Lee',
+        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
+        rating: 5,
+        date: 'September 2026',
+        comment:
+          'Waking up to the sunrise over Positano from our private pool was the highlight of our entire Italian vacation. StayEase made booking effortless!',
+      },
+    ],
+  },
+  {
+    id: 6,
+    name: 'Caldera Bliss Sanctuary',
+    roomType: 'Honeymoon Cave Villa • King Bed',
+    discount: '10% OFF',
+    rating: 4.8,
+    reviewsCount: 88,
+    price: 450,
+    priceCurrency: '$',
+    priceUnit: 'night',
+    location: 'Oia, Santorini, Greece',
+    fullAddress: 'Nikolaou Nomikou, Oia 847 02, Santorini, Greece',
+    isBestSeller: false,
+    image: IMAGES.hotels.santoriniCaldera,
+    gallery: IMAGES.hotelGalleries.santoriniCaldera,
+    tagline: 'Whitewashed Cycladic Wonder & Sunset Vistas',
+    shortDescription:
+      'Perched high above the azure Aegean Sea, sculpted from authentic volcanic stone with heated cave jacuzzi, bespoke champagne breakfasts on private cliffside verandas, and panoramic sunset views.',
+    facilityHighlights: [
+      {
+        title: '24/7 Room Service',
+        description: 'Authentic Greek mezze & Assyrtiko wine delivered directly to your terrace',
+        iconName: 'BellRing',
+      },
+      {
+        title: 'Sunset Caldera View',
+        description: 'Front-row seat to the world-famous Oia golden hour sunsets',
+        iconName: 'Compass',
+      },
+      {
+        title: 'Heated Cave Jacuzzi',
+        description: 'Sculpted volcanic cave spa with ambient underwater illumination',
+        iconName: 'Sparkles',
+      },
+    ],
+    about:
+      'Caldera Bliss Sanctuary offers an extraordinary Cycladic experience in the heart of Oia. Carved organically into the cliff face, the property features traditional curved architecture, private cave plunge pools, and uninterrupted horizons over the ancient volcanic caldera.',
+    roomDetails: {
+      type: 'Luxury Cave Villa',
+      bedType: '1 Custom King Size Platform Bed',
+      capacity: 'Up to 2 Adults',
+      size: '95 m² (1,020 sq ft)',
+      features: [
+        'Indoor & outdoor dual heated whirlpool tubs',
+        'Private panoramic sunset terrace',
+        'Traditional vaulted stone ceiling architecture',
+        'Greek Korres organic bath products',
+        'Complimentary catamaran sunset cruise voucher',
+      ],
+    },
+    amenities: [
+      {
+        title: 'Clean & Safe Stay',
+        description: 'Rigorous Mediterranean hospitality hygiene protocols',
+        iconName: 'ShieldCheck',
+      },
+      {
+        title: 'Enhanced Cleaning',
+        description: 'Twice-daily housekeeping with fresh linen service',
+        iconName: 'Sparkles',
+      },
+      {
+        title: 'Excellent Location',
+        description: 'Walkable to Oia’s iconic blue domes and dining',
+        iconName: 'MapPin',
+      },
+      {
+        title: 'Smooth Check-In',
+        description: 'Luggage escort through pedestrian village stairs',
+        iconName: 'KeyRound',
+      },
+      {
+        title: 'Free High-Speed Wi-Fi',
+        description: 'Reliable fiber optic connection',
+        iconName: 'Wifi',
+      },
+      {
+        title: 'Swimming Pool',
+        description: 'Caldera infinity pool with cocktail service',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Complimentary Parking',
+        description: 'Designated private parking area at village entrance',
+        iconName: 'Car',
+      },
+      {
+        title: 'Cliffside Bistro',
+        description: 'Fresh seafood & Greek Mediterranean gastronomy',
+        iconName: 'UtensilsCrossed',
+      },
+      {
+        title: 'Eco Climate Control',
+        description: 'Natural cave thermal insulation + silent AC',
+        iconName: 'Wind',
+      },
+    ],
+    houseRules: {
+      checkIn: '14:00 PM onwards',
+      checkOut: 'Until 11:00 AM',
+      cancellation: 'Free cancellation up to 48 hours before arrival.',
+      smoking: 'Non-smoking interiors.',
+      pets: 'Pets not permitted.',
+    },
+    reviews: [
+      {
+        id: 1,
+        author: 'Liam Johnson',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+        rating: 5,
+        date: 'August 2026',
+        comment:
+          'The caldera views from this cave villa are unmatched. Private jacuzzi at sunset with champagne was truly unforgettable.',
+      },
+    ],
+  },
+  {
+    id: 7,
+    name: 'Ubud Jungle Reserve & Spa',
+    roomType: 'Rainforest Canopy Pavilion • King Bed',
+    discount: '20% OFF',
+    rating: 4.9,
+    reviewsCount: 142,
+    price: 310,
+    priceCurrency: '$',
+    priceUnit: 'night',
+    location: 'Ubud, Bali, Indonesia',
+    fullAddress: 'Banjar Payogan, Kedewatan, Ubud, Gianyar, Bali 80571, Indonesia',
+    isBestSeller: true,
+    image: IMAGES.hotels.ubudJungle,
+    gallery: IMAGES.hotelGalleries.ubudJungle,
+    tagline: 'Deep Wellness in Sacred Rainforest Canopies',
+    shortDescription:
+      'Suspended above the mystical Ayung River Valley, featuring multilevel curved infinity pools, sacred Balinese healing treatments, and open-air pavilion living surrounded by lush jungle fauna.',
+    facilityHighlights: [
+      {
+        title: '24/7 Room Service',
+        description: 'Organic farm-to-table Balinese cuisine served in your pavilion',
+        iconName: 'BellRing',
+      },
+      {
+        title: 'Valley River View',
+        description: 'Soothing sounds of the rushing Ayung River below',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Jungle Infinity Pool',
+        description: 'Private cantilevered pool extending into the emerald tree canopy',
+        iconName: 'Sparkles',
+      },
+    ],
+    about:
+      'Immerse in the serene spirituality of Bali at Ubud Jungle Reserve & Spa. Constructed of bamboo, ironwood, and natural volcanic stone, this eco-luxury sanctuary blends seamlessly with sacred ravines and rice terrace landscapes.',
+    roomDetails: {
+      type: 'Canopy Villa with Pool',
+      bedType: '1 Hand-Carved Teak King Bed',
+      capacity: 'Up to 2 Adults, 1 Child',
+      size: '160 m² (1,720 sq ft)',
+      features: [
+        'Private jungle infinity plunge pool',
+        'Outdoor open-sky rain shower and stone soaking tub',
+        'Panoramic sun deck with meditation daybed',
+        'Daily complimentary morning yoga & afternoon herbal tea',
+        'Organic botanical toiletries crafted in Bali',
+      ],
+    },
+    amenities: [
+      {
+        title: 'Clean & Safe Stay',
+        description: 'CHSE certified eco-clean sanctuary standards',
+        iconName: 'ShieldCheck',
+      },
+      {
+        title: 'Enhanced Cleaning',
+        description: 'Chemical-free natural botanical sanitation',
+        iconName: 'Sparkles',
+      },
+      {
+        title: 'Excellent Location',
+        description: 'Tranquil seclusion just 12 mins from Ubud Cultural Center',
+        iconName: 'MapPin',
+      },
+      {
+        title: 'Smooth Check-In',
+        description: 'Traditional Balinese floral blessing & coconut water',
+        iconName: 'KeyRound',
+      },
+      {
+        title: 'Free High-Speed Wi-Fi',
+        description: 'High-speed fiber connectivity in all pavilions',
+        iconName: 'Wifi',
+      },
+      {
+        title: 'Swimming Pool',
+        description: 'Iconic tiered infinity pools overlooking jungle valley',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Valet Parking',
+        description: 'Free private valet & electric buggy service',
+        iconName: 'Car',
+      },
+      {
+        title: 'Plant-Based Restaurant',
+        description: 'Award-winning holistic gourmet cuisine',
+        iconName: 'UtensilsCrossed',
+      },
+      {
+        title: 'Eco Climate Control',
+        description: 'Open-air tropical breezes + silent air conditioning',
+        iconName: 'Wind',
+      },
+    ],
+    houseRules: {
+      checkIn: '14:00 PM onwards',
+      checkOut: 'Until 12:00 PM noon',
+      cancellation: 'Free cancellation up to 72 hours before arrival.',
+      smoking: 'Designated outdoor lounge only.',
+      pets: 'Pets not permitted.',
+    },
+    reviews: [
+      {
+        id: 1,
+        author: 'Elena Rostova',
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+        rating: 5,
+        date: 'July 2026',
+        comment:
+          'The sound of the river, the jungle canopy, and the private infinity pool created the most relaxing retreat of my life. Truly a sanctuary.',
+      },
+    ],
+  },
+  {
+    id: 8,
+    name: 'The Palm Mirage Resort',
+    roomType: 'Presidential Sky Penthouse • 2 King Beds',
+    discount: '30% OFF',
+    rating: 4.8,
+    reviewsCount: 165,
+    price: 580,
+    priceCurrency: '$',
+    priceUnit: 'night',
+    location: 'Palm Jumeirah, Dubai, UAE',
+    fullAddress: 'Crescent Road, The Palm Jumeirah, Dubai, United Arab Emirates',
+    isBestSeller: false,
+    image: IMAGES.hotels.dubaiMirage,
+    gallery: IMAGES.hotelGalleries.dubaiMirage,
+    tagline: 'Ultra-Modern Opulence on Arabian Shores',
+    shortDescription:
+      'Private beachfront palace on the iconic Palm Jumeirah, boasting private cantilevered sky pools, Rolls-Royce chauffeur transfers, Michelin-starred underwater dining, and world-class luxury shopping.',
+    facilityHighlights: [
+      {
+        title: '24/7 Room Service',
+        description: 'Royal butler service with customized fine dining menus',
+        iconName: 'BellRing',
+      },
+      {
+        title: 'Marina Skyline View',
+        description: 'Breathtaking 360° vistas of the Arabian Gulf and Dubai skyline',
+        iconName: 'Compass',
+      },
+      {
+        title: 'Private Beach Cabana',
+        description: 'Direct access to pristine private white sand shores',
+        iconName: 'Waves',
+      },
+    ],
+    about:
+      'The Palm Mirage Resort redefines futuristic architectural glamour. Located on the outer crescent of Palm Jumeirah, this palace features soaring glass atriums, infinity pools that blend with the horizon, and unrivaled bespoke hospitality.',
+    roomDetails: {
+      type: 'Sky Penthouse Suite',
+      bedType: '2 King Beds with Goose Down Pillows',
+      capacity: 'Up to 4 Adults',
+      size: '220 m² (2,370 sq ft)',
+      features: [
+        'Cantilevered glass-bottom plunge pool over the sea',
+        'Private elevator with biometric access',
+        'Floor-to-ceiling automated smart glass',
+        'Onyx master bathroom with 24K gold accents',
+        'Complimentary airport transfers in Rolls-Royce Ghost',
+      ],
+    },
+    amenities: [
+      {
+        title: 'Clean & Safe Stay',
+        description: 'Dubai Assured 5-star sanitization seal',
+        iconName: 'ShieldCheck',
+      },
+      {
+        title: 'Enhanced Cleaning',
+        description: 'Continuous HEPA filtration & 24/7 housekeeping',
+        iconName: 'Sparkles',
+      },
+      {
+        title: 'Excellent Location',
+        description: 'Prestigious Palm Jumeirah crescent with private beach',
+        iconName: 'MapPin',
+      },
+      {
+        title: 'Smooth Check-In',
+        description: 'In-suite express check-in with Arabian dates & tea',
+        iconName: 'KeyRound',
+      },
+      {
+        title: 'Free High-Speed Wi-Fi',
+        description: 'Ultra-fast 1 Gbps connection throughout property',
+        iconName: 'Wifi',
+      },
+      {
+        title: 'Swimming Pool',
+        description: 'Adults-only sky pool & lagoon pool with swim-up bar',
+        iconName: 'Waves',
+      },
+      {
+        title: 'Valet Parking',
+        description: 'Complimentary supercar parking & 24/7 chauffeur valet',
+        iconName: 'Car',
+      },
+      {
+        title: 'Celebrity Chef Dining',
+        description: 'Multiple Michelin-starred dining venues',
+        iconName: 'UtensilsCrossed',
+      },
+      {
+        title: 'Smart Climate Control',
+        description: 'Touchscreen multi-zone smart climate system',
+        iconName: 'Wind',
+      },
+    ],
+    houseRules: {
+      checkIn: '15:00 PM onwards',
+      checkOut: 'Until 12:00 PM noon',
+      cancellation: 'Free cancellation up to 4 days before arrival.',
+      smoking: 'Designated smoking areas available.',
+      pets: 'Pets not permitted.',
+    },
+    reviews: [
+      {
+        id: 1,
+        author: 'Marcus Vance',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+        rating: 5,
+        date: 'September 2026',
+        comment:
+          'From the private beach cabana to the incredible sky pool, The Palm Mirage was unforgettable. Flawless StayEase experience.',
+      },
+    ],
+  },
 ]

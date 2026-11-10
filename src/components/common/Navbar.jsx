@@ -80,17 +80,29 @@ export default function Navbar() {
 
         {/* Center Column: Perfectly Centered Navigation Links (regardless of side widths) */}
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-7 lg:gap-9">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              to={link.path}
-              className={`text-sm font-semibold tracking-wide transition-colors duration-200 hover:text-[#C6A15B] whitespace-nowrap ${
-                isSolid ? 'text-[#142B45]' : 'text-white'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive =
+              location.pathname === link.path ||
+              (link.path === '/hotels' && location.pathname.startsWith('/hotel'))
+            return (
+              <Link
+                key={link.label}
+                to={link.path}
+                className={`text-sm font-semibold tracking-wide transition-colors duration-200 whitespace-nowrap relative py-1 ${
+                  isActive
+                    ? 'text-[#C6A15B]'
+                    : isSolid
+                      ? 'text-[#142B45] hover:text-[#C6A15B]'
+                      : 'text-white hover:text-[#C6A15B]'
+                }`}
+              >
+                <span>{link.label}</span>
+                {isActive && (
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4/5 h-[2px] bg-[#C6A15B] rounded-full" />
+                )}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Right Column: Search Icon & Authentication Actions */}
@@ -153,16 +165,24 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/98 backdrop-blur-xl border-b border-slate-200 shadow-2xl px-6 py-6 transition-all duration-300">
           <nav className="flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-semibold text-[#142B45] hover:text-[#C6A15B] py-2 border-b border-slate-100 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive =
+                location.pathname === link.path ||
+                (link.path === '/hotels' && location.pathname.startsWith('/hotel'))
+              return (
+                <Link
+                  key={link.label}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`text-base font-semibold py-2 border-b border-slate-100 transition-colors flex items-center justify-between ${
+                    isActive ? 'text-[#C6A15B]' : 'text-[#142B45] hover:text-[#C6A15B]'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {isActive && <span className="h-2 w-2 rounded-full bg-[#C6A15B]" />}
+                </Link>
+              )
+            })}
 
             <SignedOut>
               <Link

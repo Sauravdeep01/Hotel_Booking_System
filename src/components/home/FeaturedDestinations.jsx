@@ -28,7 +28,7 @@ export default function FeaturedDestinations() {
 
         {/* Dynamic Hotel Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7 mt-12 sm:mt-16">
-          {FEATURED_HOTELS.map((hotel) => (
+          {FEATURED_HOTELS.slice(0, 4).map((hotel) => (
             <HotelCard key={hotel.id} hotel={hotel} />
           ))}
         </div>

@@ -4,12 +4,26 @@ import { MapPin, Star, ArrowRight } from 'lucide-react'
 export default function HotelCard({ hotel }) {
   const navigate = useNavigate()
 
-  const handleBookNow = () => {
-    navigate(`/hotel/${hotel.id}`)
+  const handleNavigate = () => {
+    navigate(`/hotels/${hotel.id}`)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleNavigate()
+    }
   }
 
   return (
-    <div className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+    <div
+      onClick={handleNavigate}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${hotel.name}`}
+      className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#C6A15B]/50"
+    >
       {/* Hotel Image with Badges */}
       <div className="relative h-56 w-full overflow-hidden bg-slate-100">
         <img
@@ -62,11 +76,15 @@ export default function HotelCard({ hotel }) {
           </div>
 
           <button
-            onClick={handleBookNow}
-            className="flex items-center gap-1.5 bg-[#142B45] hover:bg-[#C6A15B] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs hover:shadow-md active:scale-95 shrink-0"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleNavigate()
+            }}
+            className="flex items-center gap-1.5 bg-[#142B45] group-hover:bg-[#C6A15B] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs hover:shadow-md active:scale-95 shrink-0"
           >
             <span>Book Now</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </div>

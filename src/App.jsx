@@ -3,6 +3,7 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Home from './pages/Home'
+import Hotels from './pages/Hotels'
 import HotelDetails from './pages/HotelDetails'
 import ProtectedRoute from './routes/ProtectedRoute'
 
@@ -51,7 +52,15 @@ export default function App() {
         path="/hotels"
         element={
           <ProtectedRoute>
-            <Home />
+            <Hotels />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hotels/:id"
+        element={
+          <ProtectedRoute>
+            <HotelDetails />
           </ProtectedRoute>
         }
       />

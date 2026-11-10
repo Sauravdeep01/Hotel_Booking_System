@@ -47,13 +47,22 @@ export default function HotelDetails() {
             our luxury directory.
           </p>
 
-          <Link
-            to="/home"
-            className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-98"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Return to Homepage</span>
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/hotels"
+              className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-98"
+            >
+              <HotelIcon className="h-4 w-4" />
+              <span>Browse All Hotels</span>
+            </Link>
+            <Link
+              to="/home"
+              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-xs active:scale-98"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Return Home</span>
+            </Link>
+          </div>
         </main>
 
         <Footer />
@@ -83,20 +92,30 @@ export default function HotelDetails() {
 
       {/* Main Container with top padding for fixed navbar */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-4 overflow-x-auto whitespace-nowrap">
-          <Link to="/home" className="hover:text-[#142B45] transition-colors">
-            Home
+        {/* Breadcrumb Navigation & Back Link */}
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 overflow-x-auto whitespace-nowrap">
+            <Link to="/home" className="hover:text-[#142B45] transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <Link to="/hotels" className="hover:text-[#142B45] transition-colors">
+              Destinations
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-[#142B45] font-semibold truncate max-w-[200px] sm:max-w-none">
+              {hotel.name}
+            </span>
+          </nav>
+
+          <Link
+            to="/hotels"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#142B45] transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to All Hotels</span>
           </Link>
-          <ChevronRight className="h-3 w-3" />
-          <Link to="/hotels" className="hover:text-[#142B45] transition-colors">
-            Destinations
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-[#142B45] font-semibold truncate max-w-[200px] sm:max-w-none">
-            {hotel.name}
-          </span>
-        </nav>
+        </div>
 
         {/* 1. Hotel Information Section */}
         <HotelInfo hotel={hotel} />
