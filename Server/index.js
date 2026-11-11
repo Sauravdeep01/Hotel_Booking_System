@@ -1,9 +1,10 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import connectDB from './config/db.js'
 
 const app = express()
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 5000
 
 // Middleware
 app.use(
@@ -29,7 +30,8 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Internal Server Error' })
 })
 
-// Server Startup
-app.listen(PORT, () => {
-  console.log(`StayEase Server running on http://localhost:${PORT}`)
+// Start server first, then connect to MongoDB
+app.listen(PORT, async () => {
+  console.log('Server running successfully')
+  await connectDB()
 })
