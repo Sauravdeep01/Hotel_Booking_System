@@ -107,7 +107,6 @@ export default function AvailabilityCard({ hotel }) {
       discount: discountAmount,
       taxes: taxesFees,
       totalAmount: totalPrice,
-      paymentStatus: 'Unpaid',
       status: 'Confirmed',
       guestName: user?.fullName || user?.firstName || 'Valued Member',
       guestEmail: user?.primaryEmailAddress?.emailAddress || 'guest@stayease.com',

@@ -21,11 +21,8 @@ const generateSeedBookings = (userId, userName = 'Guest Traveler', userEmail = '
     discount: 204,
     taxes: 136,
     totalAmount: 1292,
-    paymentStatus: 'Paid',
     status: 'Confirmed',
     createdAt: '2026-11-01T10:30:00.000Z',
-    paidAt: '2026-11-01T10:34:00.000Z',
-    paymentMethod: 'Visa ending in 4242',
     guestName: userName,
     guestEmail: userEmail,
     specialRequests: 'Upper floor with sunset lagoon view requested.',
@@ -46,7 +43,6 @@ const generateSeedBookings = (userId, userName = 'Guest Traveler', userEmail = '
     discount: 189,
     taxes: 126,
     totalAmount: 1197,
-    paymentStatus: 'Unpaid',
     status: 'Pending',
     createdAt: '2026-11-09T14:15:00.000Z',
     guestName: userName,
@@ -69,11 +65,8 @@ const generateSeedBookings = (userId, userName = 'Guest Traveler', userEmail = '
     discount: 234,
     taxes: 156,
     totalAmount: 1482,
-    paymentStatus: 'Paid',
     status: 'Completed',
     createdAt: '2026-08-20T08:00:00.000Z',
-    paidAt: '2026-08-20T08:05:00.000Z',
-    paymentMethod: 'Mastercard ending in 8891',
     guestName: userName,
     guestEmail: userEmail,
     specialRequests: 'Traditional Japanese breakfast preference.',
@@ -94,7 +87,6 @@ const generateSeedBookings = (userId, userName = 'Guest Traveler', userEmail = '
     discount: 288,
     taxes: 192,
     totalAmount: 1824,
-    paymentStatus: 'Unpaid',
     status: 'Cancelled',
     createdAt: '2026-06-15T12:00:00.000Z',
     guestName: userName,
@@ -152,7 +144,7 @@ export const createBooking = (userId, bookingPayload) => {
   const newBooking = {
     id: newBookingId,
     userId,
-    status: bookingPayload.paymentStatus === 'Paid' ? 'Confirmed' : 'Pending',
+    status: 'Confirmed',
     createdAt: new Date().toISOString(),
     ...bookingPayload,
   }
@@ -160,30 +152,6 @@ export const createBooking = (userId, bookingPayload) => {
   store[userId] = [newBooking, ...userBookings]
   saveRawBookingsStore(store)
   return newBooking
-}
-
-/**
- * Update payment status for a specific booking
- */
-export const updateBookingPayment = (userId, bookingId, paymentDetails = {}) => {
-  if (!userId || !bookingId) return false
-  const store = getRawBookingsStore()
-  const userBookings = store[userId] || []
-
-  const index = userBookings.findIndex((b) => b.id === bookingId)
-  if (index === -1) return false
-
-  userBookings[index] = {
-    ...userBookings[index],
-    paymentStatus: 'Paid',
-    status: 'Confirmed',
-    paidAt: new Date().toISOString(),
-    paymentMethod: paymentDetails.method || 'Credit Card ending in 4242',
-  }
-
-  store[userId] = userBookings
-  saveRawBookingsStore(store)
-  return userBookings[index]
 }
 
 /**
@@ -237,4 +205,3 @@ export const clearPendingBooking = () => {
     console.error('Failed to clear pending booking from session', err)
   }
 }
-

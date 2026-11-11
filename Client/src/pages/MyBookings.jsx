@@ -5,7 +5,6 @@ import {
   Calendar,
   MapPin,
   Users,
-  CreditCard,
   Eye,
   XCircle,
   Sparkles,
@@ -20,7 +19,6 @@ import BookingDetailsModal from '../components/booking/BookingDetailsModal'
 import {
   getUserBookings,
   createBooking,
-  updateBookingPayment,
   cancelBooking,
   getPendingBooking,
   clearPendingBooking,
@@ -82,22 +80,6 @@ export default function MyBookings() {
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState(null)
   const [bookingToCancel, setBookingToCancel] = useState(null)
 
-  // Simple Mock Pay Now action (no payment gateway / forms)
-  const handleSimplePay = (booking) => {
-    if (!user || !booking) return
-    const updated = updateBookingPayment(user.id, booking.id, { method: 'Mock Instant Payment' })
-    if (updated) {
-      setBookings((prev) =>
-        prev.map((b) => (b.id === booking.id ? updated : b))
-      )
-      setNotification({
-        type: 'success',
-        text: `Payment of $${booking.totalAmount} for ${booking.hotelName} completed! Payment status updated to Paid.`,
-      })
-      setTimeout(() => setNotification(null), 5000)
-    }
-  }
-
   // Cancel confirmed
   const handleConfirmCancel = () => {
     if (!user || !bookingToCancel) return
@@ -142,7 +124,7 @@ export default function MyBookings() {
             </h1>
 
             <p className="mt-2 text-slate-600 text-sm sm:text-base font-light">
-              Welcome back, <span className="font-semibold text-[#142B45]">{user?.firstName || 'Guest'}</span>. Review upcoming itineraries, manage payments, and explore your reservations.
+              Welcome back, <span className="font-semibold text-[#142B45]">{user?.firstName || 'Guest'}</span>. Review upcoming itineraries and manage your reservations.
             </p>
           </div>
 
@@ -161,17 +143,25 @@ export default function MyBookings() {
             className={`mt-6 p-4 rounded-2xl flex items-center justify-between text-xs font-medium transition-all animate-in fade-in ${
               notification.type === 'success'
                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                : 'bg-blue-50 text-blue-900 border border-blue-200'
+                : notification.type === 'error'
+                  ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                  : 'bg-amber-50 text-amber-900 border border-amber-200'
             }`}
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              {notification.type === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              ) : notification.type === 'error' ? (
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+              )}
               <span>{notification.text}</span>
             </div>
             <button
               type="button"
               onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-slate-600 p-1"
+              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
             >
               ×
             </button>
@@ -193,7 +183,7 @@ export default function MyBookings() {
                     alt={booking.hotelName}
                     className="w-full h-full object-cover object-center"
                   />
-                  {/* Status Overlay Badges */}
+                  {/* Status Overlay Badge */}
                   <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-xs ${
@@ -205,15 +195,6 @@ export default function MyBookings() {
                       }`}
                     >
                       {booking.status}
-                    </span>
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-xs ${
-                        booking.paymentStatus === 'Paid'
-                          ? 'bg-white/95 text-emerald-800 border border-emerald-200'
-                          : 'bg-amber-50/95 text-amber-900 border border-amber-300'
-                      }`}
-                    >
-                      {booking.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid'}
                     </span>
                   </div>
                 </div>
@@ -301,18 +282,6 @@ export default function MyBookings() {
                         <span>View Details</span>
                       </button>
 
-                      {/* Simple Mock Pay Now Button (Only for unpaid eligible bookings) */}
-                      {booking.paymentStatus === 'Unpaid' && booking.status !== 'Cancelled' && (
-                        <button
-                          type="button"
-                          onClick={() => handleSimplePay(booking)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C6A15B] hover:bg-[#b58f4a] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
-                        >
-                          <CreditCard className="h-3.5 w-3.5" />
-                          <span>Pay Now</span>
-                        </button>
-                      )}
-
                       {/* Cancel Booking Button (Only for active upcoming bookings) */}
                       {booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
                         <button
@@ -363,10 +332,6 @@ export default function MyBookings() {
         booking={selectedBookingForDetails}
         isOpen={Boolean(selectedBookingForDetails)}
         onClose={() => setSelectedBookingForDetails(null)}
-        onPayNow={(b) => {
-          setSelectedBookingForDetails(null)
-          handleSimplePay(b)
-        }}
       />
 
       {/* Cancel Confirmation Dialog */}

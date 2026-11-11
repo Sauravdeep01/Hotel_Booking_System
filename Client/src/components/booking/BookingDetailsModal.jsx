@@ -3,12 +3,10 @@ import {
   MapPin,
   Calendar,
   Users,
-  CheckCircle2,
-  CreditCard,
   Building,
 } from 'lucide-react'
 
-export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow }) {
+export default function BookingDetailsModal({ booking, isOpen, onClose }) {
   if (!isOpen || !booking) return null
 
   return (
@@ -28,7 +26,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
             type="button"
             onClick={onClose}
             aria-label="Close details"
-            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
+            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -50,7 +48,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
 
         {/* Modal Scrollable Content */}
         <div className="p-6 overflow-y-auto space-y-5 text-[#142B45] text-xs">
-          {/* Status Badges */}
+          {/* Status Badge */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400 font-semibold uppercase text-[10px]">Booking:</span>
@@ -64,19 +62,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
                 }`}
               >
                 {booking.status}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 font-semibold uppercase text-[10px]">Payment:</span>
-              <span
-                className={`px-2.5 py-1 rounded-full font-bold uppercase tracking-wider text-[10px] ${
-                  booking.paymentStatus === 'Paid'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}
-              >
-                {booking.paymentStatus}
               </span>
             </div>
           </div>
@@ -98,63 +83,79 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
                 Check-out Date
               </span>
               <span className="font-bold text-sm text-[#142B45] block">{booking.checkOut}</span>
-              <span className="text-[11px] text-slate-500">Until 11:30 AM</span>
-            </div>
-
-            <div className="pt-2 border-t border-slate-200/60">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block flex items-center gap-1 mb-1">
-                <Building className="h-3 w-3 text-[#C6A15B]" />
-                Room / Suite
-              </span>
-              <span className="font-bold text-slate-700">{booking.roomType}</span>
-            </div>
-
-            <div className="pt-2 border-t border-slate-200/60">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block flex items-center gap-1 mb-1">
-                <Users className="h-3 w-3 text-[#C6A15B]" />
-                Occupancy & Stay
-              </span>
-              <span className="font-bold text-slate-700">
-                {booking.guests} • {booking.nights} {booking.nights === 1 ? 'Night' : 'Nights'}
-              </span>
+              <span className="text-[11px] text-slate-500">Until 11:00 AM</span>
             </div>
           </div>
 
-          {/* Guest Contact Info */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/80">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-2">
-              Primary Guest Details
+          {/* Guest and Room Specification */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+              Accommodations
             </span>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-slate-800">{booking.guestName}</p>
-                <p className="text-slate-500 text-[11px]">{booking.guestEmail}</p>
+            <div className="p-3.5 rounded-2xl border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  <Building className="h-3.5 w-3.5 text-[#C6A15B]" />
+                  Room Specification
+                </span>
+                <span className="font-semibold text-[#142B45]">{booking.roomType}</span>
               </div>
-              <div className="text-right text-[11px] text-slate-400">
-                Booked on: {new Date(booking.createdAt).toLocaleDateString()}
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-[#C6A15B]" />
+                  Registered Guests
+                </span>
+                <span className="font-semibold text-[#142B45]">
+                  {booking.guests} ({booking.nights} {booking.nights === 1 ? 'Night' : 'Nights'})
+                </span>
               </div>
             </div>
-            {booking.specialRequests && (
-              <p className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500 italic">
-                Note: &quot;{booking.specialRequests}&quot;
-              </p>
-            )}
           </div>
 
-          {/* Pricing Breakdown */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 space-y-2">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-              Payment Summary
+          {/* Guest Personal Information */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+              Primary Guest
+            </span>
+            <div className="p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="font-bold text-xs text-[#142B45] block">
+                  {booking.guestName || 'Valued Member'}
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {booking.guestEmail || 'guest@stayease.com'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Special Requests */}
+          {booking.specialRequests && (
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                Special Requests
+              </span>
+              <p className="p-3 rounded-xl bg-slate-50 text-slate-600 border border-slate-200/60 leading-relaxed text-[11px]">
+                {booking.specialRequests}
+              </p>
+            </div>
+          )}
+
+          {/* Price Breakdown */}
+          <div className="p-4 rounded-2xl bg-[#F5F7FA] border border-slate-200/80 space-y-2">
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">
+              Pricing Summary
             </span>
 
             <div className="flex items-center justify-between text-slate-600">
-              <span>Standard Room Rate ({booking.nights} nights)</span>
+              <span>Room Rate ({booking.nights} nights)</span>
               <span>${booking.basePrice}</span>
             </div>
 
             {booking.discount > 0 && (
-              <div className="flex items-center justify-between text-emerald-700">
-                <span>Member Luxury Discount</span>
+              <div className="flex items-center justify-between text-emerald-700 font-medium">
+                <span>Member Luxury Privilege</span>
                 <span>-${booking.discount}</span>
               </div>
             )}
@@ -168,13 +169,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
               <span>Total Amount</span>
               <span className="font-serif text-xl font-bold">${booking.totalAmount}</span>
             </div>
-
-            {booking.paymentStatus === 'Paid' && booking.paymentMethod && (
-              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-emerald-700 text-[11px]">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Paid via {booking.paymentMethod}</span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -183,24 +177,10 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onPayNow
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-white transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-white transition-colors cursor-pointer"
           >
             Close
           </button>
-
-          {booking.paymentStatus === 'Unpaid' && booking.status !== 'Cancelled' && (
-            <button
-              type="button"
-              onClick={() => {
-                onClose()
-                onPayNow(booking)
-              }}
-              className="flex items-center gap-1.5 bg-[#142B45] hover:bg-[#C6A15B] text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md transition-all active:scale-95"
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              <span>Pay ${booking.totalAmount} Now</span>
-            </button>
-          )}
         </div>
       </div>
     </div>
