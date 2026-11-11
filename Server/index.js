@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import connectDB from './config/db.js'
+import hotelRoutes from './routes/hotelRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -15,7 +16,7 @@ app.use(
 )
 app.use(express.json())
 
-// Basic Health Route
+// Routes
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -23,6 +24,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   })
 })
+
+app.use('/api/hotels', hotelRoutes)
 
 // Basic Error Handling Middleware
 app.use((err, req, res, _next) => {
