@@ -123,9 +123,9 @@ export default function Navbar() {
           {/* User signed in: My Bookings & Clerk UserButton */}
           <SignedIn>
             <Link
-              to="/bookings"
+              to="/my-bookings"
               className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-all ${
-                location.pathname === '/bookings'
+                location.pathname === '/my-bookings' || location.pathname === '/bookings'
                   ? 'bg-[#C6A15B] text-white border-[#C6A15B] shadow-xs'
                   : isSolid
                     ? 'border-slate-200 text-[#142B45] hover:text-[#C6A15B] hover:border-[#C6A15B] bg-slate-50'
@@ -146,7 +146,7 @@ export default function Navbar() {
                   <UserButton.Link
                     label="My Bookings"
                     labelIcon={<BookmarkCheck className="h-4 w-4 text-[#C6A15B]" />}
-                    href="/bookings"
+                    href="/my-bookings"
                   />
                 </UserButton.MenuItems>
               </UserButton>
@@ -210,10 +210,10 @@ export default function Navbar() {
 
             <SignedIn>
               <Link
-                to="/bookings"
+                to="/my-bookings"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`text-base font-semibold py-2 border-b border-slate-100 transition-colors flex items-center justify-between ${
-                  location.pathname === '/bookings'
+                  location.pathname === '/my-bookings' || location.pathname === '/bookings'
                     ? 'text-[#C6A15B]'
                     : 'text-[#142B45] hover:text-[#C6A15B]'
                 }`}
@@ -222,7 +222,7 @@ export default function Navbar() {
                   <BookmarkCheck className="h-4 w-4 text-[#C6A15B]" />
                   <span>My Bookings</span>
                 </div>
-                {location.pathname === '/bookings' && (
+                {(location.pathname === '/my-bookings' || location.pathname === '/bookings') && (
                   <span className="h-2 w-2 rounded-full bg-[#C6A15B]" />
                 )}
               </Link>

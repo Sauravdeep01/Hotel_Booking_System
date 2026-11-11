@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import {
@@ -16,19 +16,39 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
-import PaymentModal from '../components/booking/PaymentModal'
 import BookingDetailsModal from '../components/booking/BookingDetailsModal'
 import {
   getUserBookings,
+  createBooking,
   updateBookingPayment,
   cancelBooking,
+  getPendingBooking,
+  clearPendingBooking,
 } from '../utils/bookingStorage'
 
 export default function MyBookings() {
   const { user } = useUser()
   const [loadedUserId, setLoadedUserId] = useState(user?.id || null)
+  const [notification, setNotification] = useState(() => {
+    if (user?.id) {
+      const pending = getPendingBooking()
+      if (pending) {
+        return {
+          type: 'success',
+          text: `Booking confirmed! Your reservation for ${pending.hotelName} has been booked successfully.`,
+        }
+      }
+    }
+    return null
+  })
+
   const [bookings, setBookings] = useState(() => {
     if (user?.id) {
+      const pending = getPendingBooking()
+      if (pending) {
+        createBooking(user.id, pending)
+        clearPendingBooking()
+      }
       return getUserBookings(
         user.id,
         user.fullName || user.firstName || 'Valued Member',
@@ -41,6 +61,15 @@ export default function MyBookings() {
   // Sync bookings if authenticated user loads or changes
   if (user?.id && user.id !== loadedUserId) {
     setLoadedUserId(user.id)
+    const pending = getPendingBooking()
+    if (pending) {
+      createBooking(user.id, pending)
+      clearPendingBooking()
+      setNotification({
+        type: 'success',
+        text: `Booking confirmed! Your reservation for ${pending.hotelName} has been booked successfully.`,
+      })
+    }
     setBookings(
       getUserBookings(
         user.id,
@@ -50,52 +79,20 @@ export default function MyBookings() {
     )
   }
 
-  const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'upcoming' | 'completed' | 'cancelled'
-  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState(null)
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState(null)
   const [bookingToCancel, setBookingToCancel] = useState(null)
-  const [notification, setNotification] = useState(null)
 
-  // Filter bookings
-  const filteredBookings = useMemo(() => {
-    if (activeFilter === 'all') return bookings
-    if (activeFilter === 'upcoming') {
-      return bookings.filter(
-        (b) => (b.status === 'Confirmed' || b.status === 'Pending') && b.status !== 'Cancelled'
-      )
-    }
-    if (activeFilter === 'completed') {
-      return bookings.filter((b) => b.status === 'Completed')
-    }
-    if (activeFilter === 'cancelled') {
-      return bookings.filter((b) => b.status === 'Cancelled')
-    }
-    return bookings
-  }, [bookings, activeFilter])
-
-  // Counts for tabs
-  const counts = useMemo(() => {
-    return {
-      all: bookings.length,
-      upcoming: bookings.filter(
-        (b) => (b.status === 'Confirmed' || b.status === 'Pending') && b.status !== 'Cancelled'
-      ).length,
-      completed: bookings.filter((b) => b.status === 'Completed').length,
-      cancelled: bookings.filter((b) => b.status === 'Cancelled').length,
-    }
-  }, [bookings])
-
-  // Payment completed
-  const handlePaymentSuccess = (paymentDetails) => {
-    if (!user || !selectedBookingForPayment) return
-    const updated = updateBookingPayment(user.id, selectedBookingForPayment.id, paymentDetails)
+  // Simple Mock Pay Now action (no payment gateway / forms)
+  const handleSimplePay = (booking) => {
+    if (!user || !booking) return
+    const updated = updateBookingPayment(user.id, booking.id, { method: 'Mock Instant Payment' })
     if (updated) {
       setBookings((prev) =>
-        prev.map((b) => (b.id === selectedBookingForPayment.id ? updated : b))
+        prev.map((b) => (b.id === booking.id ? updated : b))
       )
       setNotification({
         type: 'success',
-        text: `Payment of $${selectedBookingForPayment.totalAmount} for ${selectedBookingForPayment.hotelName} was successfully processed!`,
+        text: `Payment of $${booking.totalAmount} for ${booking.hotelName} completed! Payment status updated to Paid.`,
       })
       setTimeout(() => setNotification(null), 5000)
     }
@@ -145,7 +142,7 @@ export default function MyBookings() {
             </h1>
 
             <p className="mt-2 text-slate-600 text-sm sm:text-base font-light">
-              Welcome back, <span className="font-semibold text-[#142B45]">{user?.firstName || 'Guest'}</span>. Review upcoming itineraries, manage payments, and explore past luxury stays.
+              Welcome back, <span className="font-semibold text-[#142B45]">{user?.firstName || 'Guest'}</span>. Review upcoming itineraries, manage payments, and explore your reservations.
             </p>
           </div>
 
@@ -181,42 +178,10 @@ export default function MyBookings() {
           </div>
         )}
 
-        {/* Filter Tabs */}
-        <div className="mt-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200/80">
-          {[
-            { id: 'all', label: 'All Bookings', count: counts.all },
-            { id: 'upcoming', label: 'Upcoming', count: counts.upcoming },
-            { id: 'completed', label: 'Completed', count: counts.completed },
-            { id: 'cancelled', label: 'Cancelled', count: counts.cancelled },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveFilter(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
-                activeFilter === tab.id
-                  ? 'bg-[#142B45] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#142B45] hover:bg-white bg-transparent'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                  activeFilter === tab.id
-                    ? 'bg-white/20 text-white'
-                    : 'bg-slate-200 text-slate-700'
-                }`}
-              >
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
         {/* Bookings List or Empty State */}
-        {filteredBookings.length > 0 ? (
+        {bookings.length > 0 ? (
           <div className="mt-8 space-y-6">
-            {filteredBookings.map((booking) => (
+            {bookings.map((booking) => (
               <div
                 key={booking.id}
                 className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col lg:flex-row items-stretch"
@@ -330,18 +295,18 @@ export default function MyBookings() {
                       <button
                         type="button"
                         onClick={() => setSelectedBookingForDetails(booking)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-[#142B45] text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-[#142B45] text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                       >
                         <Eye className="h-3.5 w-3.5 text-slate-500" />
                         <span>View Details</span>
                       </button>
 
-                      {/* Pay Now Button (Only for unpaid eligible bookings) */}
+                      {/* Simple Mock Pay Now Button (Only for unpaid eligible bookings) */}
                       {booking.paymentStatus === 'Unpaid' && booking.status !== 'Cancelled' && (
                         <button
                           type="button"
-                          onClick={() => setSelectedBookingForPayment(booking)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C6A15B] hover:bg-[#b58f4a] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95"
+                          onClick={() => handleSimplePay(booking)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C6A15B] hover:bg-[#b58f4a] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
                         >
                           <CreditCard className="h-3.5 w-3.5" />
                           <span>Pay Now</span>
@@ -353,7 +318,7 @@ export default function MyBookings() {
                         <button
                           type="button"
                           onClick={() => setBookingToCancel(booking)}
-                          className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all active:scale-95"
+                          className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all active:scale-95 cursor-pointer"
                         >
                           <XCircle className="h-3.5 w-3.5" />
                           <span>Cancel</span>
@@ -373,11 +338,11 @@ export default function MyBookings() {
             </div>
 
             <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-2">
-              No {activeFilter !== 'all' ? activeFilter : ''} bookings found
+              No bookings found
             </h3>
 
             <p className="text-slate-500 text-sm max-w-md font-light leading-relaxed mb-6">
-              You currently have no reservations under this filter. Explore our curated destinations and book an extraordinary getaway with StayEase.
+              You currently have no reservations. Explore our curated destinations and book an extraordinary getaway with StayEase.
             </p>
 
             <Link
@@ -393,20 +358,15 @@ export default function MyBookings() {
 
       <Footer />
 
-      {/* Payment Gateway Modal */}
-      <PaymentModal
-        booking={selectedBookingForPayment}
-        isOpen={Boolean(selectedBookingForPayment)}
-        onClose={() => setSelectedBookingForPayment(null)}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
-
       {/* Booking Full Details Modal */}
       <BookingDetailsModal
         booking={selectedBookingForDetails}
         isOpen={Boolean(selectedBookingForDetails)}
         onClose={() => setSelectedBookingForDetails(null)}
-        onPayNow={(b) => setSelectedBookingForPayment(b)}
+        onPayNow={(b) => {
+          setSelectedBookingForDetails(null)
+          handleSimplePay(b)
+        }}
       />
 
       {/* Cancel Confirmation Dialog */}
@@ -429,14 +389,14 @@ export default function MyBookings() {
               <button
                 type="button"
                 onClick={() => setBookingToCancel(null)}
-                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Keep Booking
               </button>
               <button
                 type="button"
                 onClick={handleConfirmCancel}
-                className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md transition-colors cursor-pointer"
               >
                 Yes, Cancel
               </button>

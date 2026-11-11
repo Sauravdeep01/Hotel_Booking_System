@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Hotels from './pages/Hotels'
 import HotelDetails from './pages/HotelDetails'
-import BookingConfirm from './pages/BookingConfirm'
 import MyBookings from './pages/MyBookings'
 import ProtectedRoute from './routes/ProtectedRoute'
 
@@ -28,10 +27,10 @@ export default function App() {
 
       {/* Protected Routes - Accessible only to authenticated users */}
       <Route
-        path="/booking/confirm"
+        path="/my-bookings"
         element={
           <ProtectedRoute>
-            <BookingConfirm />
+            <MyBookings />
           </ProtectedRoute>
         }
       />
@@ -44,12 +43,12 @@ export default function App() {
         }
       />
       <Route
-        path="/my-bookings"
-        element={<Navigate to="/bookings" replace />}
+        path="/booking/confirm"
+        element={<Navigate to="/my-bookings" replace />}
       />
       <Route
         path="/dashboard"
-        element={<Navigate to="/bookings" replace />}
+        element={<Navigate to="/my-bookings" replace />}
       />
 
       <Route path="*" element={<Navigate to="/home" replace />} />

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth, useClerk } from '@clerk/clerk-react'
+import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
 import {
   Calendar,
   Users,
@@ -10,9 +10,9 @@ import {
   Loader2,
   Sparkles,
   ArrowRight,
-  Lock,
+  Search,
 } from 'lucide-react'
-import { savePendingBooking } from '../../utils/bookingStorage'
+import { savePendingBooking, createBooking } from '../../utils/bookingStorage'
 
 // Static date baseline outside component for render purity
 const TODAY_STR = new Date().toISOString().split('T')[0]
@@ -25,11 +25,14 @@ const getTomorrowStr = () => {
 export default function AvailabilityCard({ hotel }) {
   const navigate = useNavigate()
   const { isSignedIn } = useAuth()
+  const { user } = useUser()
   const { openSignIn } = useClerk()
+
   const [checkIn, setCheckIn] = useState(TODAY_STR)
   const [checkOut, setCheckOut] = useState(getTomorrowStr)
   const [guests, setGuests] = useState('2 Guests')
   const [isChecking, setIsChecking] = useState(false)
+  const [isAvailable, setIsAvailable] = useState(false)
   const [statusMessage, setStatusMessage] = useState(null)
 
   // Calculate nights
@@ -51,60 +54,91 @@ export default function AvailabilityCard({ hotel }) {
   const validateDates = () => {
     if (!checkIn || !checkOut) {
       setStatusMessage({ type: 'error', text: 'Please select both check-in and check-out dates.' })
+      setIsAvailable(false)
       return false
     }
 
     if (new Date(checkOut) <= new Date(checkIn)) {
       setStatusMessage({ type: 'error', text: 'Check-out date must be strictly after check-in date.' })
+      setIsAvailable(false)
       return false
     }
 
     return true
   }
 
-  const handleCheckAvailability = (e) => {
+  // Handle single dynamic button action (Check Availability -> Book Now)
+  const handleActionClick = (e) => {
     e.preventDefault()
+
+    // 1. If not verified as available yet, run Check Availability
+    if (!isAvailable) {
+      if (!validateDates()) return
+
+      setIsChecking(true)
+      setStatusMessage(null)
+
+      // Simulate mock availability inquiry
+      setTimeout(() => {
+        setIsChecking(false)
+        setIsAvailable(true)
+        setStatusMessage({
+          type: 'success',
+          text: `Room is available for ${nights} ${nights === 1 ? 'night' : 'nights'}! Click Book Now to secure your stay.`,
+        })
+      }, 500)
+      return
+    }
+
+    // 2. If already available, run Book Now
     if (!validateDates()) return
 
-    setIsChecking(true)
-    setStatusMessage(null)
-
-    // Simulate backend availability inquiry
-    setTimeout(() => {
-      setIsChecking(false)
-      setStatusMessage({
-        type: 'success',
-        text: `Suite is available for ${nights} ${nights === 1 ? 'night' : 'nights'}! 2 suites remaining at this rate.`,
-      })
-    }, 600)
-  }
-
-  const handleProceedToBooking = () => {
-    if (!validateDates()) return
-
-    const bookingParams = {
+    const bookingPayload = {
       hotelId: hotel.id,
+      hotelName: hotel.name,
+      hotelImage: hotel.image,
+      location: hotel.location,
+      roomType: hotel.roomDetails?.type || hotel.roomType,
       checkIn,
       checkOut,
-      guests,
-      roomType: hotel.roomDetails?.type || hotel.roomType,
       nights,
-      totalPrice,
+      guests,
+      basePrice,
+      discount: discountAmount,
+      taxes: taxesFees,
+      totalAmount: totalPrice,
+      paymentStatus: 'Unpaid',
+      status: 'Confirmed',
+      guestName: user?.fullName || user?.firstName || 'Valued Member',
+      guestEmail: user?.primaryEmailAddress?.emailAddress || 'guest@stayease.com',
     }
-
-    const targetUrl = `/booking/confirm?hotelId=${hotel.id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${encodeURIComponent(guests)}`
 
     if (!isSignedIn) {
-      // Unauthenticated: save pending booking and open Clerk prebuilt SignIn modal
-      savePendingBooking(bookingParams)
+      // Unauthenticated: preserve booking details and open Clerk prebuilt SignIn modal
+      savePendingBooking(bookingPayload)
       openSignIn({
-        fallbackRedirectUrl: targetUrl,
-        forceRedirectUrl: targetUrl,
+        fallbackRedirectUrl: '/my-bookings',
+        forceRedirectUrl: '/my-bookings',
       })
     } else {
-      // Authenticated: proceed directly to confirmation
-      navigate(targetUrl)
+      // Authenticated: create mock booking directly and redirect to /my-bookings
+      createBooking(user.id, bookingPayload)
+      navigate('/my-bookings')
     }
+  }
+
+  // Reset availability status when dates or guests change
+  const handleDateChange = (type, value) => {
+    if (type === 'checkIn') setCheckIn(value)
+    if (type === 'checkOut') setCheckOut(value)
+    setIsAvailable(false)
+    setStatusMessage(null)
+  }
+
+  const handleGuestsChange = (value) => {
+    setGuests(value)
+    setIsAvailable(false)
+    setStatusMessage(null)
   }
 
   return (
@@ -132,7 +166,7 @@ export default function AvailabilityCard({ hotel }) {
       </div>
 
       {/* Date & Guest Form */}
-      <form onSubmit={handleCheckAvailability} className="mt-5 space-y-3.5">
+      <form onSubmit={handleActionClick} className="mt-5 space-y-3.5">
         <div className="grid grid-cols-2 gap-2.5">
           {/* Check-In */}
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
@@ -144,10 +178,7 @@ export default function AvailabilityCard({ hotel }) {
               type="date"
               min={TODAY_STR}
               value={checkIn}
-              onChange={(e) => {
-                setCheckIn(e.target.value)
-                setStatusMessage(null)
-              }}
+              onChange={(e) => handleDateChange('checkIn', e.target.value)}
               className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
             />
           </div>
@@ -162,10 +193,7 @@ export default function AvailabilityCard({ hotel }) {
               type="date"
               min={checkIn || TODAY_STR}
               value={checkOut}
-              onChange={(e) => {
-                setCheckOut(e.target.value)
-                setStatusMessage(null)
-              }}
+              onChange={(e) => handleDateChange('checkOut', e.target.value)}
               className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
             />
           </div>
@@ -179,10 +207,7 @@ export default function AvailabilityCard({ hotel }) {
           </label>
           <select
             value={guests}
-            onChange={(e) => {
-              setGuests(e.target.value)
-              setStatusMessage(null)
-            }}
+            onChange={(e) => handleGuestsChange(e.target.value)}
             className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
           >
             <option value="1 Guest">1 Guest</option>
@@ -192,19 +217,31 @@ export default function AvailabilityCard({ hotel }) {
           </select>
         </div>
 
-        {/* Check Availability Button */}
+        {/* Dynamic Action Button (Switches from Check Availability to Book Now) */}
         <button
           type="submit"
           disabled={isChecking}
-          className="w-full flex items-center justify-center gap-2 bg-[#C6A15B] hover:bg-[#b58f4a] disabled:bg-slate-300 text-white font-semibold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] text-sm"
+          className={`w-full flex items-center justify-center gap-2 font-semibold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] text-xs uppercase tracking-wider ${
+            isAvailable
+              ? 'bg-[#142B45] hover:bg-[#C6A15B] text-white ring-2 ring-[#C6A15B]/30'
+              : 'bg-[#C6A15B] hover:bg-[#b58f4a] text-white disabled:bg-slate-300'
+          }`}
         >
           {isChecking ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Verifying Suite Availability...</span>
+              <span>Verifying Room Availability...</span>
+            </>
+          ) : isAvailable ? (
+            <>
+              <span>Book Now</span>
+              <ArrowRight className="h-4 w-4" />
             </>
           ) : (
-            <span>Check Availability</span>
+            <>
+              <Search className="h-4 w-4" />
+              <span>Check Availability</span>
+            </>
           )}
         </button>
       </form>
@@ -212,7 +249,7 @@ export default function AvailabilityCard({ hotel }) {
       {/* Dynamic Feedback Banner */}
       {statusMessage && (
         <div
-          className={`mt-4 p-3.5 rounded-2xl text-xs flex items-start gap-2.5 transition-all ${
+          className={`mt-4 p-3.5 rounded-2xl text-xs flex items-start gap-2.5 transition-all animate-in fade-in ${
             statusMessage.type === 'success'
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
               : 'bg-rose-50 text-rose-800 border border-rose-200'
@@ -227,7 +264,7 @@ export default function AvailabilityCard({ hotel }) {
         </div>
       )}
 
-      {/* Price Summary Breakdown (shown after check or by default) */}
+      {/* Price Summary Breakdown */}
       <div className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
         <div className="flex items-center justify-between">
           <span>
@@ -256,29 +293,10 @@ export default function AvailabilityCard({ hotel }) {
         </div>
       </div>
 
-      {/* Reservation CTA Action */}
-      <div className="mt-5 space-y-2">
-        <button
-          type="button"
-          onClick={handleProceedToBooking}
-          className="w-full flex items-center justify-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white font-semibold py-3.5 px-6 rounded-2xl text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
-        >
-          <span>Reserve & Book Suite</span>
-          <ArrowRight className="h-4 w-4" />
-        </button>
-
-        {!isSignedIn && (
-          <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
-            <Lock className="h-3 w-3 text-[#C6A15B]" />
-            <span>Sign-in required to confirm • Dates will be preserved</span>
-          </p>
-        )}
-      </div>
-
       {/* Security Assurance */}
       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-400">
         <ShieldCheck className="h-4 w-4 text-[#C6A15B]" />
-        <span>No immediate charge • 256-Bit SSL Encrypted</span>
+        <span>Instant Confirmation • Best Rate Guarantee</span>
       </div>
     </div>
   )
