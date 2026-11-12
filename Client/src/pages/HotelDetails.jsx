@@ -31,30 +31,47 @@ export default function HotelDetails() {
   const [hotel, setHotel] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [invalidId, setInvalidId] = useState(false)
 
-  // Fetch hotel by ID from backend; fallback to local templates for numeric routes
+  // Fetch hotel by ID from backend whenever id changes
   const loadHotel = async () => {
+    if (!id) {
+      setHotel(null)
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
+      setInvalidId(false)
+
       const res = await getHotelById(id)
 
       if (res.success && res.data) {
         setHotel(res.data)
       } else {
-        const numericId = parseInt(id, 10)
-        if (!isNaN(numericId)) {
-          const matchedStatic = FEATURED_HOTELS.find((h) => h.id === numericId)
-          if (matchedStatic) {
-            setHotel(normalizeHotel(matchedStatic))
-            return
+        // Handle invalid ID format from API
+        if (res.status === 400 || res.message?.toLowerCase().includes('invalid')) {
+          if (/^\d+$/.test(id)) {
+            const numericId = parseInt(id, 10)
+            const matchedStatic = FEATURED_HOTELS.find((h) => h.id === numericId)
+            if (matchedStatic) {
+              setHotel(normalizeHotel(matchedStatic))
+              return
+            }
           }
+          setInvalidId(true)
+          setHotel(null)
+          return
         }
+
         setHotel(null)
       }
     } catch (err) {
       console.error('Error fetching hotel details:', err)
       setError(err.message || 'Unable to retrieve property information')
+      setHotel(null)
     } finally {
       setLoading(false)
     }
@@ -108,6 +125,48 @@ export default function HotelDetails() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-3xl p-8 h-96 border border-slate-200/80 animate-pulse" />
             </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  if (invalidId) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">
+        <Navbar />
+
+        <main className="flex-1 max-w-4xl mx-auto px-4 py-36 text-center flex flex-col items-center justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shadow-md mb-6">
+            <AlertCircle className="h-8 w-8" />
+          </div>
+
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#142B45] mb-3">
+            Invalid Hotel ID
+          </h1>
+
+          <p className="text-slate-600 max-w-md text-sm leading-relaxed mb-8">
+            The hotel identifier provided in the URL is invalid. Please select a verified property
+            from our directory.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/hotels"
+              className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-98"
+            >
+              <HotelIcon className="h-4 w-4" />
+              <span>Browse All Hotels</span>
+            </Link>
+            <Link
+              to="/home"
+              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-xs active:scale-98"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Return Home</span>
+            </Link>
           </div>
         </main>
 

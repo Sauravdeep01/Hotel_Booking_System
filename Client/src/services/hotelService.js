@@ -183,19 +183,32 @@ export const getFeaturedHotels = async () => {
 
 // Fetch single hotel details by its MongoDB ID
 export const getHotelById = async (id) => {
-  if (!id) return { success: false, data: null }
+  if (!id) return { success: false, message: 'Hotel ID is required', data: null }
 
   const response = await fetch(`${HOTELS_API_URL}/${id}`)
+  const result = await response.json().catch(() => null)
+
   if (!response.ok) {
-    if (response.status === 404 || response.status === 400) {
-      return { success: false, data: null }
+    if (response.status === 400 || response.status === 404) {
+      return {
+        success: false,
+        status: response.status,
+        message:
+          result?.message ||
+          (response.status === 400 ? 'Invalid hotel ID format' : 'Hotel not found'),
+        data: null,
+      }
     }
-    throw new Error(`Failed to fetch hotel details (${response.status})`)
+    throw new Error(result?.message || `Failed to fetch hotel details (${response.status})`)
   }
 
-  const result = await response.json()
-  if (!result.success || !result.data) {
-    return { success: false, data: null }
+  if (!result || !result.success || !result.data) {
+    return {
+      success: false,
+      status: response.status,
+      message: result?.message || 'Hotel not found',
+      data: null,
+    }
   }
 
   return {
