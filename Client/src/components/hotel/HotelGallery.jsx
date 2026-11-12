@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { X, ChevronLeft, ChevronRight, Grid, Maximize2 } from 'lucide-react'
 
 export default function HotelGallery({ hotel }) {
-  const images = hotel.gallery && hotel.gallery.length > 0 ? hotel.gallery : [hotel.image]
+  const images =
+    (Array.isArray(hotel.images) && hotel.images.length > 0 && hotel.images) ||
+    (Array.isArray(hotel.gallery) && hotel.gallery.length > 0 && hotel.gallery) ||
+    (hotel.image ? [hotel.image] : [])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
-  // Keyboard navigation for Lightbox
+  // Keyboard navigation for lightbox (Escape, ArrowLeft, ArrowRight)
   useEffect(() => {
     if (!lightboxOpen) return
 
@@ -30,9 +33,7 @@ export default function HotelGallery({ hotel }) {
 
   return (
     <div className="my-6">
-      {/* Gallery Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4 h-[380px] sm:h-[480px] lg:h-[520px]">
-        {/* Large Primary Image (Left - spans 2 or 3 cols) */}
         <div
           onClick={() => openLightboxAt(selectedIndex)}
           className="relative md:col-span-2 lg:col-span-2 h-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm group cursor-pointer bg-slate-100"
@@ -45,14 +46,12 @@ export default function HotelGallery({ hotel }) {
 
           <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
 
-          {/* Quick View Button */}
           <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-xl flex items-center gap-2 text-xs font-semibold text-[#142B45] shadow-sm">
             <Maximize2 className="h-3.5 w-3.5 text-[#C6A15B]" />
             <span>Click to expand</span>
           </div>
         </div>
 
-        {/* 4 Smaller Images Grid (Right - 2 cols, 2x2 layout) */}
         <div className="hidden md:grid md:col-span-2 lg:col-span-2 grid-cols-2 gap-3 sm:gap-4 h-full">
           {sideImages.map((imgUrl, idx) => {
             const actualIndex = idx + 1
@@ -74,14 +73,13 @@ export default function HotelGallery({ hotel }) {
 
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/25 transition-colors" />
 
-                {/* Last image overlay badge if there are more photos */}
                 {idx === 3 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       openLightboxAt(0)
                     }}
-                    className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex items-center justify-center text-white text-xs sm:text-sm font-bold gap-1.5 hover:bg-black/60 transition-colors"
+                    className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex items-center justify-center text-white text-xs sm:text-sm font-bold gap-1.5 hover:bg-black/60 transition-colors cursor-pointer"
                   >
                     <Grid className="h-4 w-4 text-[#C6A15B]" />
                     <span>View all {images.length} photos</span>
@@ -93,67 +91,72 @@ export default function HotelGallery({ hotel }) {
         </div>
       </div>
 
-      {/* Full-Screen Lightbox Modal */}
       {lightboxOpen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-lg flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
-          {/* Lightbox Header */}
           <div className="flex items-center justify-between text-white pb-3 border-b border-white/10">
-            <div>
-              <p className="text-sm font-semibold">{hotel.name}</p>
-              <p className="text-xs text-white/60">
+            <div className="flex items-center gap-2 text-sm font-serif">
+              <span className="font-bold text-[#C6A15B]">{hotel.name}</span>
+              <span className="text-white/40">•</span>
+              <span className="text-white/70">
                 Photo {selectedIndex + 1} of {images.length}
-              </p>
+              </span>
             </div>
 
             <button
               onClick={() => setLightboxOpen(false)}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-              aria-label="Close Gallery"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              aria-label="Close Gallery Lightbox"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Lightbox Main Stage */}
           <div className="relative flex-1 flex items-center justify-center my-4 overflow-hidden">
             <img
               src={images[selectedIndex]}
-              alt={`${hotel.name} Fullscreen View`}
-              className="max-h-[75vh] max-w-full rounded-2xl object-contain shadow-2xl transition-all select-none"
+              alt={`${hotel.name} Fullscreen View ${selectedIndex + 1}`}
+              className="max-h-[75vh] max-w-[92vw] object-contain rounded-xl shadow-2xl transition-all duration-300"
             />
 
-            {/* Previous Arrow */}
-            <button
-              onClick={() => setSelectedIndex((prev) => (prev - 1 + images.length) % images.length)}
-              className="absolute left-2 sm:left-6 p-3 rounded-full bg-black/50 hover:bg-black/80 text-white border border-white/15 transition-all hover:scale-105"
-              aria-label="Previous Photo"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() =>
+                    setSelectedIndex((prev) => (prev - 1 + images.length) % images.length)
+                  }
+                  className="absolute left-2 sm:left-4 p-3 rounded-full bg-black/50 hover:bg-[#C6A15B] text-white transition-all shadow-md active:scale-95 cursor-pointer"
+                  aria-label="Previous Photo"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
 
-            {/* Next Arrow */}
-            <button
-              onClick={() => setSelectedIndex((prev) => (prev + 1) % images.length)}
-              className="absolute right-2 sm:right-6 p-3 rounded-full bg-black/50 hover:bg-black/80 text-white border border-white/15 transition-all hover:scale-105"
-              aria-label="Next Photo"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
+                <button
+                  onClick={() => setSelectedIndex((prev) => (prev + 1) % images.length)}
+                  className="absolute right-2 sm:right-4 p-3 rounded-full bg-black/50 hover:bg-[#C6A15B] text-white transition-all shadow-md active:scale-95 cursor-pointer"
+                  aria-label="Next Photo"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Thumbnail Strip */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto py-2">
+          <div className="flex items-center justify-center gap-2 overflow-x-auto py-2 scrollbar-none">
             {images.map((imgUrl, i) => (
               <button
                 key={i}
                 onClick={() => setSelectedIndex(i)}
-                className={`h-14 w-20 sm:h-16 sm:w-24 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
+                className={`relative h-14 w-20 sm:h-16 sm:w-24 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
                   selectedIndex === i
-                    ? 'border-[#C6A15B] scale-105 opacity-100 shadow-md'
-                    : 'border-transparent opacity-50 hover:opacity-80'
+                    ? 'border-[#C6A15B] scale-105 shadow-md'
+                    : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <img src={imgUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                <img
+                  src={imgUrl}
+                  alt={`Thumbnail ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
               </button>
             ))}
           </div>
@@ -162,4 +165,3 @@ export default function HotelGallery({ hotel }) {
     </div>
   )
 }
-

@@ -114,16 +114,12 @@ const saveRawBookingsStore = (store) => {
   }
 }
 
-/**
- * Get all bookings belonging to a specific user.
- * Automatically seeds initial demo records for this user if first time.
- */
+// Get all bookings belonging to a specific user
 export const getUserBookings = (userId, userName, userEmail) => {
   if (!userId) return []
   const store = getRawBookingsStore()
 
   if (!store[userId]) {
-    // Seed initial mock bookings for this user
     store[userId] = generateSeedBookings(userId, userName, userEmail)
     saveRawBookingsStore(store)
   }
@@ -131,9 +127,7 @@ export const getUserBookings = (userId, userName, userEmail) => {
   return store[userId] || []
 }
 
-/**
- * Create a new booking for the user
- */
+// Create a new booking for the user
 export const createBooking = (userId, bookingPayload) => {
   if (!userId) throw new Error('User must be authenticated to create a booking')
   const store = getRawBookingsStore()
@@ -154,9 +148,7 @@ export const createBooking = (userId, bookingPayload) => {
   return newBooking
 }
 
-/**
- * Cancel a booking
- */
+// Cancel a booking
 export const cancelBooking = (userId, bookingId) => {
   if (!userId || !bookingId) return false
   const store = getRawBookingsStore()
@@ -176,10 +168,7 @@ export const cancelBooking = (userId, bookingId) => {
   return userBookings[index]
 }
 
-/**
- * Pending Booking in sessionStorage
- * Used to preserve hotel, dates, guests when unauthenticated user signs in
- */
+// Preserve booking data across Clerk authentication flow
 export const savePendingBooking = (bookingData) => {
   try {
     sessionStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify(bookingData))

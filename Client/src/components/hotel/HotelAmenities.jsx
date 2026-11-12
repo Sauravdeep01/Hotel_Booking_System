@@ -10,7 +10,6 @@ import {
   Wind,
 } from 'lucide-react'
 
-// Mapping icon names to Lucide icons
 const iconMap = {
   ShieldCheck,
   Sparkles,
@@ -83,7 +82,6 @@ export default function HotelAmenities({ amenities }) {
         Carefully curated amenities designed to guarantee comfort, leisure, and complete peace of mind.
       </p>
 
-      {/* Grid of Amenities */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((item, idx) => {
           const IconComponent = iconMap[item.iconName] || Sparkles
@@ -112,4 +110,3 @@ export default function HotelAmenities({ amenities }) {
     </div>
   )
 }
-

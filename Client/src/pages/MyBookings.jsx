@@ -56,7 +56,7 @@ export default function MyBookings() {
     return []
   })
 
-  // Sync bookings if authenticated user loads or changes
+  // Sync bookings when authenticated user loads or changes
   if (user?.id && user.id !== loadedUserId) {
     setLoadedUserId(user.id)
     const pending = getPendingBooking()
@@ -80,7 +80,7 @@ export default function MyBookings() {
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState(null)
   const [bookingToCancel, setBookingToCancel] = useState(null)
 
-  // Cancel confirmed
+  // Confirm and persist reservation cancellation
   const handleConfirmCancel = () => {
     if (!user || !bookingToCancel) return
     const updated = cancelBooking(user.id, bookingToCancel.id)
@@ -102,7 +102,6 @@ export default function MyBookings() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-20">
-        {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-6">
           <Link to="/home" className="hover:text-[#142B45] transition-colors">
             Home
@@ -111,7 +110,6 @@ export default function MyBookings() {
           <span className="text-[#142B45] font-semibold">My Reservations</span>
         </nav>
 
-        {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-slate-200/80">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[#C6A15B]/15 border border-[#C6A15B]/30 px-3.5 py-1 text-xs font-semibold text-[#142B45] mb-3">
@@ -137,7 +135,6 @@ export default function MyBookings() {
           </Link>
         </div>
 
-        {/* Real-time Notification Banner */}
         {notification && (
           <div
             className={`mt-6 p-4 rounded-2xl flex items-center justify-between text-xs font-medium transition-all animate-in fade-in ${
@@ -168,7 +165,6 @@ export default function MyBookings() {
           </div>
         )}
 
-        {/* Bookings List or Empty State */}
         {bookings.length > 0 ? (
           <div className="mt-8 space-y-6">
             {bookings.map((booking) => (
@@ -176,14 +172,12 @@ export default function MyBookings() {
                 key={booking.id}
                 className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col lg:flex-row items-stretch"
               >
-                {/* Hotel Thumbnail Image */}
                 <div className="lg:w-72 xl:w-80 h-52 lg:h-auto relative overflow-hidden bg-slate-100 shrink-0">
                   <img
                     src={booking.hotelImage}
                     alt={booking.hotelName}
                     className="w-full h-full object-cover object-center"
                   />
-                  {/* Status Overlay Badge */}
                   <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-xs ${
@@ -199,10 +193,8 @@ export default function MyBookings() {
                   </div>
                 </div>
 
-                {/* Booking Body Info */}
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
                   <div>
-                    {/* Top Row: Ref and Location */}
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <MapPin className="h-3.5 w-3.5 text-[#C6A15B] shrink-0" />
@@ -213,7 +205,6 @@ export default function MyBookings() {
                       </span>
                     </div>
 
-                    {/* Hotel Name */}
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#142B45] leading-snug">
                       {booking.hotelName}
                     </h3>
@@ -221,7 +212,6 @@ export default function MyBookings() {
                       {booking.roomType}
                     </p>
 
-                    {/* Itinerary Matrix */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5 p-3.5 rounded-2xl bg-[#F5F7FA] border border-slate-200/60 text-xs">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-slate-400 block flex items-center gap-1">
@@ -255,7 +245,6 @@ export default function MyBookings() {
                     </div>
                   </div>
 
-                  {/* Pricing and Action Buttons */}
                   <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
@@ -272,7 +261,6 @@ export default function MyBookings() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                      {/* View Details Button */}
                       <button
                         type="button"
                         onClick={() => setSelectedBookingForDetails(booking)}
@@ -282,7 +270,6 @@ export default function MyBookings() {
                         <span>View Details</span>
                       </button>
 
-                      {/* Cancel Booking Button (Only for active upcoming bookings) */}
                       {booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
                         <button
                           type="button"
@@ -300,7 +287,6 @@ export default function MyBookings() {
             ))}
           </div>
         ) : (
-          /* Empty State */
           <div className="bg-white rounded-3xl p-12 sm:p-16 text-center border border-slate-200/80 shadow-xs mt-8 max-w-2xl mx-auto flex flex-col items-center">
             <div className="h-16 w-16 rounded-2xl bg-[#142B45]/5 text-[#C6A15B] flex items-center justify-center mb-4">
               <Calendar className="h-8 w-8" />
@@ -327,14 +313,12 @@ export default function MyBookings() {
 
       <Footer />
 
-      {/* Booking Full Details Modal */}
       <BookingDetailsModal
         booking={selectedBookingForDetails}
         isOpen={Boolean(selectedBookingForDetails)}
         onClose={() => setSelectedBookingForDetails(null)}
       />
 
-      {/* Cancel Confirmation Dialog */}
       {bookingToCancel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#142B45]/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 text-center">

@@ -43,7 +43,6 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[68px] relative flex items-center justify-between transition-all duration-300">
-        {/* Left Column: Brand Logo & Name */}
         <div className="flex items-center">
           <Link
             to="/home"
@@ -78,7 +77,6 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center Column: Perfectly Centered Navigation Links (regardless of side widths) */}
         <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-7 lg:gap-9">
           {navLinks.map((link) => {
             const isActive =
@@ -105,9 +103,7 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Right Column: Search Icon & Authentication Actions */}
         <div className="flex items-center gap-2.5 sm:gap-3.5">
-          {/* Quick Search Button */}
           <Link
             to="/hotels"
             aria-label="Search destinations"
@@ -120,7 +116,6 @@ export default function Navbar() {
             <Search className="h-4 w-4" />
           </Link>
 
-          {/* User signed in: My Bookings & Clerk UserButton */}
           <SignedIn>
             <Link
               to="/my-bookings"
@@ -153,7 +148,6 @@ export default function Navbar() {
             </div>
           </SignedIn>
 
-          {/* User signed out: Prebuilt Clerk SignIn Modal Button */}
           <SignedOut>
             <SignInButton mode="modal">
               <button
@@ -170,11 +164,10 @@ export default function Navbar() {
             </SignInButton>
           </SignedOut>
 
-          {/* Mobile Menu Hamburger Toggle */}
           <button
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Navigation Menu"
-            className={`md:hidden p-2 rounded-xl border transition-colors ${
+            className={`md:hidden p-2 rounded-xl border transition-colors cursor-pointer ${
               isSolid
                 ? 'border-slate-200 text-[#142B45]'
                 : 'border-white/20 text-white bg-white/10'
@@ -185,7 +178,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Responsive Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/98 backdrop-blur-xl border-b border-slate-200 shadow-2xl px-6 py-6 transition-all duration-300">
           <nav className="flex flex-col gap-4">
@@ -198,48 +190,42 @@ export default function Navbar() {
                   key={link.label}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`text-base font-semibold py-2 border-b border-slate-100 transition-colors flex items-center justify-between ${
-                    isActive ? 'text-[#C6A15B]' : 'text-[#142B45] hover:text-[#C6A15B]'
+                  className={`text-base font-semibold py-2 px-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-[#C6A15B] bg-[#C6A15B]/10 font-bold'
+                      : 'text-[#142B45] hover:text-[#C6A15B] hover:bg-slate-50'
                   }`}
                 >
-                  <span>{link.label}</span>
-                  {isActive && <span className="h-2 w-2 rounded-full bg-[#C6A15B]" />}
+                  {link.label}
                 </Link>
               )
             })}
 
-            <SignedIn>
-              <Link
-                to="/my-bookings"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-semibold py-2 border-b border-slate-100 transition-colors flex items-center justify-between ${
-                  location.pathname === '/my-bookings' || location.pathname === '/bookings'
-                    ? 'text-[#C6A15B]'
-                    : 'text-[#142B45] hover:text-[#C6A15B]'
-                }`}
-              >
-                <div className="flex items-center gap-2">
+            <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+              <SignedIn>
+                <Link
+                  to="/my-bookings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm font-semibold text-[#142B45] hover:text-[#C6A15B] py-2 px-3 rounded-lg hover:bg-slate-50"
+                >
                   <BookmarkCheck className="h-4 w-4 text-[#C6A15B]" />
                   <span>My Bookings</span>
-                </div>
-                {(location.pathname === '/my-bookings' || location.pathname === '/bookings') && (
-                  <span className="h-2 w-2 rounded-full bg-[#C6A15B]" />
-                )}
-              </Link>
-            </SignedIn>
+                </Link>
+              </SignedIn>
 
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="mt-2 flex items-center justify-center gap-2 w-full bg-[#142B45] hover:bg-[#C6A15B] text-white py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Login to StayEase</span>
-                </button>
-              </SignInButton>
-            </SignedOut>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 bg-[#142B45] text-white font-semibold py-3 px-4 rounded-xl shadow-xs cursor-pointer"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </button>
+                </SignInButton>
+              </SignedOut>
+            </div>
           </nav>
         </div>
       )}

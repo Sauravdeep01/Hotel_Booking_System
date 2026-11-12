@@ -5,7 +5,7 @@ export const stayEaseClerkAppearance = {
     logoPlacement: 'none',
   },
   variables: {
-    colorPrimary: '#142B45', // Dark Navy primary for "Continue >" button
+    colorPrimary: '#142B45',
     colorText: '#142B45',
     colorTextSecondary: '#64748B',
     colorBackground: '#FFFFFF',

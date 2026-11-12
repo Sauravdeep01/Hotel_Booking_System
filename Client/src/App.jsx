@@ -8,7 +8,7 @@ import ProtectedRoute from './routes/ProtectedRoute'
 export default function App() {
   return (
     <Routes>
-      {/* Public Pages - Accessible to all visitors without login */}
+      {/* Public routes */}
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
       <Route path="/hotels" element={<Hotels />} />
@@ -19,13 +19,13 @@ export default function App() {
       <Route path="/experience" element={<Home />} />
       <Route path="/about" element={<Home />} />
 
-      {/* Redirect obsolete auth routes to homepage */}
+      {/* Auth redirects */}
       <Route path="/login" element={<Navigate to="/home" replace />} />
       <Route path="/login/*" element={<Navigate to="/home" replace />} />
       <Route path="/signup" element={<Navigate to="/home" replace />} />
       <Route path="/signup/*" element={<Navigate to="/home" replace />} />
 
-      {/* Protected Routes - Accessible only to authenticated users */}
+      {/* Protected routes */}
       <Route
         path="/my-bookings"
         element={

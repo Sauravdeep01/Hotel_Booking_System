@@ -23,24 +23,22 @@ export default function HotelReviews({ hotel }) {
           </p>
         </div>
 
-        {/* Big Overall Rating Pill */}
         <div className="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs shrink-0 self-start sm:self-auto">
           <div className="flex items-center gap-1.5 text-amber-500">
             <Star className="h-5 w-5 fill-amber-400" />
             <span className="font-serif text-2xl font-bold text-[#142B45]">
-              {hotel.rating.toFixed(1)}
+              {(typeof hotel.rating === 'number' ? hotel.rating : 5).toFixed(1)}
             </span>
           </div>
           <div className="border-l border-slate-200 pl-3">
             <p className="text-xs font-bold text-[#142B45]">Superb Experience</p>
             <p className="text-[11px] text-slate-400 font-medium">
-              Based on {hotel.reviewsCount} verified stays
+              Based on {hotel.reviewsCount ?? hotel.reviewCount ?? 0} verified stays
             </p>
           </div>
         </div>
       </div>
 
-      {/* Rating Breakdown Bars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 p-5 rounded-2xl bg-white border border-slate-200/80 mb-8">
         {ratingCategories.map((cat, i) => (
           <div key={i} className="flex flex-col gap-1.5">
@@ -58,7 +56,6 @@ export default function HotelReviews({ hotel }) {
         ))}
       </div>
 
-      {/* Review Comments Cards */}
       <div className="space-y-4">
         {reviews.map((rev) => (
           <div
@@ -78,7 +75,6 @@ export default function HotelReviews({ hotel }) {
                 </div>
               </div>
 
-              {/* Rating */}
               <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(5)].map((_, idx) => (
                   <Star
@@ -109,4 +105,3 @@ export default function HotelReviews({ hotel }) {
     </div>
   )
 }
-

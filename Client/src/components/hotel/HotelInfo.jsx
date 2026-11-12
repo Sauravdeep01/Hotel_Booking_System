@@ -7,6 +7,7 @@ export default function HotelInfo({ hotel }) {
   const [isSaved, setIsSaved] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // Copy current URL to clipboard for sharing
   const handleShare = async () => {
     try {
       if (navigator.clipboard) {
@@ -15,28 +16,26 @@ export default function HotelInfo({ hotel }) {
         setTimeout(() => setCopied(false), 2000)
       }
     } catch {
-      // fallback
+      // Ignore clipboard write failures
     }
   }
 
   return (
     <div className="pb-6 border-b border-slate-200/80">
-      {/* Top Navigation Row: Back Button & Actions */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#142B45] py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#142B45] py-2 px-3 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Hotels</span>
         </button>
 
         <div className="flex items-center gap-2">
-          {/* Share Button */}
           <button
             onClick={handleShare}
             title="Share this hotel"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-[#142B45] hover:border-[#C6A15B] hover:bg-slate-50 transition shadow-2xs"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-[#142B45] hover:border-[#C6A15B] hover:bg-slate-50 transition shadow-2xs cursor-pointer"
           >
             {copied ? (
               <>
@@ -51,11 +50,10 @@ export default function HotelInfo({ hotel }) {
             )}
           </button>
 
-          {/* Save / Wishlist Button */}
           <button
             onClick={() => setIsSaved(!isSaved)}
             title={isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition shadow-2xs ${
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition shadow-2xs cursor-pointer ${
               isSaved
                 ? 'border-rose-300 bg-rose-50 text-rose-600'
                 : 'border-slate-200 text-slate-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50/50'
@@ -67,12 +65,11 @@ export default function HotelInfo({ hotel }) {
         </div>
       </div>
 
-      {/* Main Hotel Title & Badges */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-[#C6A15B] bg-[#C6A15B]/10 border border-[#C6A15B]/30 px-3 py-0.5 rounded-full">
-              {hotel.roomType}
+              {hotel.roomType || 'Luxury Residence'}
             </span>
 
             {hotel.discount && (
@@ -89,22 +86,30 @@ export default function HotelInfo({ hotel }) {
         </div>
       </div>
 
-      {/* Meta Row: Rating, Reviews & Map Location */}
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
         <div className="flex items-center gap-1.5">
           <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-          <span className="font-bold text-[#142B45]">{hotel.rating.toFixed(1)}</span>
-          <span className="text-slate-400 font-medium">({hotel.reviewsCount} reviews)</span>
+          <span className="font-bold text-[#142B45]">
+            {(typeof hotel.rating === 'number' ? hotel.rating : 5).toFixed(1)}
+          </span>
+          <span className="text-slate-400 font-medium">
+            ({hotel.reviewsCount ?? hotel.reviewCount ?? 0} reviews)
+          </span>
         </div>
 
         <span className="text-slate-300 hidden sm:inline">•</span>
 
         <div className="flex items-center gap-1 text-slate-500">
           <MapPin className="h-4 w-4 text-[#C6A15B] shrink-0" />
-          <span>{hotel.location}</span>
+          <span>
+            {typeof hotel.location === 'object' && hotel.location !== null
+              ? [hotel.location.city, hotel.location.country].filter(Boolean).join(', ') ||
+                hotel.location.address ||
+                ''
+              : hotel.location || ''}
+          </span>
         </div>
       </div>
     </div>
   )
 }
-

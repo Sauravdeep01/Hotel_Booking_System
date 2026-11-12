@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import { savePendingBooking, createBooking } from '../../utils/bookingStorage'
 
-// Static date baseline outside component for render purity
 const TODAY_STR = new Date().toISOString().split('T')[0]
 const getTomorrowStr = () => {
   const d = new Date()
@@ -35,7 +34,7 @@ export default function AvailabilityCard({ hotel }) {
   const [isAvailable, setIsAvailable] = useState(false)
   const [statusMessage, setStatusMessage] = useState(null)
 
-  // Calculate nights
+  // Calculate duration of stay in nights
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1
     const d1 = new Date(checkIn)
@@ -46,7 +45,9 @@ export default function AvailabilityCard({ hotel }) {
   }
 
   const nights = calculateNights()
-  const basePrice = hotel.price * nights
+  const currentPrice = hotel.price || 350
+  const priceUnit = hotel.priceUnit || 'night'
+  const basePrice = currentPrice * nights
   const discountAmount = Math.round(basePrice * 0.15)
   const taxesFees = Math.round(basePrice * 0.1)
   const totalPrice = basePrice - discountAmount + taxesFees
@@ -67,18 +68,16 @@ export default function AvailabilityCard({ hotel }) {
     return true
   }
 
-  // Handle single dynamic button action (Check Availability -> Book Now)
+  // Handle action: verify availability first, then proceed to booking
   const handleActionClick = (e) => {
     e.preventDefault()
 
-    // 1. If not verified as available yet, run Check Availability
     if (!isAvailable) {
       if (!validateDates()) return
 
       setIsChecking(true)
       setStatusMessage(null)
 
-      // Simulate mock availability inquiry
       setTimeout(() => {
         setIsChecking(false)
         setIsAvailable(true)
@@ -90,7 +89,6 @@ export default function AvailabilityCard({ hotel }) {
       return
     }
 
-    // 2. If already available, run Book Now
     if (!validateDates()) return
 
     const bookingPayload = {
@@ -113,20 +111,18 @@ export default function AvailabilityCard({ hotel }) {
     }
 
     if (!isSignedIn) {
-      // Unauthenticated: preserve booking details and open Clerk prebuilt SignIn modal
+      // Save pending booking for unauthenticated users redirecting through Clerk login
       savePendingBooking(bookingPayload)
       openSignIn({
         fallbackRedirectUrl: '/my-bookings',
         forceRedirectUrl: '/my-bookings',
       })
     } else {
-      // Authenticated: create mock booking directly and redirect to /my-bookings
       createBooking(user.id, bookingPayload)
       navigate('/my-bookings')
     }
   }
 
-  // Reset availability status when dates or guests change
   const handleDateChange = (type, value) => {
     if (type === 'checkIn') setCheckIn(value)
     if (type === 'checkOut') setCheckOut(value)
@@ -142,7 +138,6 @@ export default function AvailabilityCard({ hotel }) {
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl p-6 sm:p-7 sticky top-24 transition-all">
-      {/* Price Header */}
       <div className="flex items-baseline justify-between pb-5 border-b border-slate-100">
         <div>
           <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
@@ -150,9 +145,9 @@ export default function AvailabilityCard({ hotel }) {
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="font-serif text-3xl font-bold text-[#142B45]">
-              ${hotel.price}
+              ${currentPrice}
             </span>
-            <span className="text-sm font-medium text-slate-500">/ {hotel.priceUnit}</span>
+            <span className="text-sm font-medium text-slate-500">/ {priceUnit}</span>
           </div>
         </div>
 
@@ -164,10 +159,8 @@ export default function AvailabilityCard({ hotel }) {
         )}
       </div>
 
-      {/* Date & Guest Form */}
       <form onSubmit={handleActionClick} className="mt-5 space-y-3.5">
         <div className="grid grid-cols-2 gap-2.5">
-          {/* Check-In */}
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
             <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
               <Calendar className="h-3 w-3 text-[#C6A15B]" />
@@ -182,7 +175,6 @@ export default function AvailabilityCard({ hotel }) {
             />
           </div>
 
-          {/* Check-Out */}
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
             <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
               <Calendar className="h-3 w-3 text-[#C6A15B]" />
@@ -198,7 +190,6 @@ export default function AvailabilityCard({ hotel }) {
           </div>
         </div>
 
-        {/* Guests Count */}
         <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
           <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
             <Users className="h-3 w-3 text-[#C6A15B]" />
@@ -216,7 +207,6 @@ export default function AvailabilityCard({ hotel }) {
           </select>
         </div>
 
-        {/* Dynamic Action Button (Switches from Check Availability to Book Now) */}
         <button
           type="submit"
           disabled={isChecking}
@@ -245,7 +235,6 @@ export default function AvailabilityCard({ hotel }) {
         </button>
       </form>
 
-      {/* Dynamic Feedback Banner */}
       {statusMessage && (
         <div
           className={`mt-4 p-3.5 rounded-2xl text-xs flex items-start gap-2.5 transition-all animate-in fade-in ${
@@ -263,11 +252,10 @@ export default function AvailabilityCard({ hotel }) {
         </div>
       )}
 
-      {/* Price Summary Breakdown */}
       <div className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
         <div className="flex items-center justify-between">
           <span>
-            ${hotel.price} × {nights} {nights === 1 ? 'night' : 'nights'}
+            ${currentPrice} × {nights} {nights === 1 ? 'night' : 'nights'}
           </span>
           <span className="font-semibold text-[#142B45]">${basePrice}</span>
         </div>
@@ -292,7 +280,6 @@ export default function AvailabilityCard({ hotel }) {
         </div>
       </div>
 
-      {/* Security Assurance */}
       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-400">
         <ShieldCheck className="h-4 w-4 text-[#C6A15B]" />
         <span>Instant Confirmation • Best Rate Guarantee</span>

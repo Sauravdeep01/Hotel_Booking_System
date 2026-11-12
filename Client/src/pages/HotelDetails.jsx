@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   Hotel as HotelIcon,
@@ -12,6 +13,8 @@ import {
   ArrowLeft,
   ChevronRight,
   Maximize,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
@@ -20,14 +23,139 @@ import HotelGallery from '../components/hotel/HotelGallery'
 import AvailabilityCard from '../components/hotel/AvailabilityCard'
 import HotelAmenities from '../components/hotel/HotelAmenities'
 import HotelReviews from '../components/hotel/HotelReviews'
+import { getHotelById, normalizeHotel } from '../services/hotelService'
 import { FEATURED_HOTELS } from '../constants/hotels'
 
 export default function HotelDetails() {
   const { id } = useParams()
-  const hotelId = parseInt(id, 10)
-  const hotel = FEATURED_HOTELS.find((h) => h.id === hotelId)
+  const [hotel, setHotel] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // 404 Not Found State
+  // Fetch hotel by ID from backend; fallback to local templates for numeric routes
+  const loadHotel = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const res = await getHotelById(id)
+
+      if (res.success && res.data) {
+        setHotel(res.data)
+      } else {
+        const numericId = parseInt(id, 10)
+        if (!isNaN(numericId)) {
+          const matchedStatic = FEATURED_HOTELS.find((h) => h.id === numericId)
+          if (matchedStatic) {
+            setHotel(normalizeHotel(matchedStatic))
+            return
+          }
+        }
+        setHotel(null)
+      }
+    } catch (err) {
+      console.error('Error fetching hotel details:', err)
+      setError(err.message || 'Unable to retrieve property information')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadHotel()
+  }, [id])
+
+  // Highlights icon mapping
+  const getHighlightIcon = (iconName) => {
+    switch (iconName) {
+      case 'BellRing':
+        return <BellRing className="h-5 w-5 text-[#C6A15B]" />
+      case 'Waves':
+        return <Waves className="h-5 w-5 text-[#C6A15B]" />
+      case 'Mountain':
+        return <Mountain className="h-5 w-5 text-[#C6A15B]" />
+      case 'Compass':
+        return <Compass className="h-5 w-5 text-[#C6A15B]" />
+      default:
+        return <Sparkles className="h-5 w-5 text-[#C6A15B]" />
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">
+        <Navbar />
+
+        <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16">
+          <div className="h-4 bg-slate-200 rounded w-48 mb-6 animate-pulse" />
+          <div className="h-10 bg-slate-200 rounded w-2/3 mb-3 animate-pulse" />
+          <div className="h-5 bg-slate-200 rounded w-1/3 mb-8 animate-pulse" />
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[380px] sm:h-[480px] mb-8">
+            <div className="md:col-span-2 bg-slate-200 rounded-3xl animate-pulse" />
+            <div className="hidden md:grid md:col-span-2 grid-cols-2 gap-4">
+              <div className="bg-slate-200 rounded-2xl animate-pulse" />
+              <div className="bg-slate-200 rounded-2xl animate-pulse" />
+              <div className="bg-slate-200 rounded-2xl animate-pulse" />
+              <div className="bg-slate-200 rounded-2xl animate-pulse" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-3xl p-8 h-48 border border-slate-200/80 animate-pulse" />
+              <div className="bg-white rounded-3xl p-8 h-40 border border-slate-200/80 animate-pulse" />
+            </div>
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-3xl p-8 h-96 border border-slate-200/80 animate-pulse" />
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">
+        <Navbar />
+
+        <main className="flex-1 max-w-4xl mx-auto px-4 py-36 text-center flex flex-col items-center justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-500 shadow-md mb-6">
+            <AlertCircle className="h-8 w-8" />
+          </div>
+
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#142B45] mb-3">
+            Error Loading Property
+          </h1>
+
+          <p className="text-slate-600 max-w-md text-sm leading-relaxed mb-8">{error}</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={loadHotel}
+              className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-98 cursor-pointer"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Retry</span>
+            </button>
+            <Link
+              to="/hotels"
+              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-6 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-xs active:scale-98"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Browse All Hotels</span>
+            </Link>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
+
   if (!hotel) {
     return (
       <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">
@@ -70,29 +198,11 @@ export default function HotelDetails() {
     )
   }
 
-  // Highlights icon mapping
-  const getHighlightIcon = (iconName) => {
-    switch (iconName) {
-      case 'BellRing':
-        return <BellRing className="h-5 w-5 text-[#C6A15B]" />
-      case 'Waves':
-        return <Waves className="h-5 w-5 text-[#C6A15B]" />
-      case 'Mountain':
-        return <Mountain className="h-5 w-5 text-[#C6A15B]" />
-      case 'Compass':
-        return <Compass className="h-5 w-5 text-[#C6A15B]" />
-      default:
-        return <Sparkles className="h-5 w-5 text-[#C6A15B]" />
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[#F5F7FA] text-[#142B45] flex flex-col justify-between">
       <Navbar />
 
-      {/* Main Container with top padding for fixed navbar */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16">
-        {/* Breadcrumb Navigation & Back Link */}
         <div className="flex items-center justify-between gap-4 mb-4">
           <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 overflow-x-auto whitespace-nowrap">
             <Link to="/home" className="hover:text-[#142B45] transition-colors">
@@ -117,17 +227,11 @@ export default function HotelDetails() {
           </Link>
         </div>
 
-        {/* 1. Hotel Information Section */}
         <HotelInfo hotel={hotel} />
-
-        {/* 2. Hotel Image Gallery with Lightbox */}
         <HotelGallery hotel={hotel} />
 
-        {/* 3. Two-Column Layout: Left Content & Right Sticky Availability Card */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12 mt-8">
-          {/* Left Column (Content Sections) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* 3a. Hotel Description & Pricing Highlights */}
             <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
               <span className="text-xs font-bold uppercase tracking-wider text-[#C6A15B]">
                 StayEase Signature Residence
@@ -137,43 +241,42 @@ export default function HotelDetails() {
               </h2>
 
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-light mb-6">
-                {hotel.shortDescription}
+                {hotel.shortDescription || hotel.description}
               </p>
 
-              {/* Facility Highlights Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
-                {hotel.facilityHighlights.map((feat, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-2xl bg-[#F5F7FA] border border-slate-200/60 flex items-start gap-3"
-                  >
-                    <div className="p-2 rounded-xl bg-white shadow-2xs shrink-0">
-                      {getHighlightIcon(feat.iconName)}
+              {hotel.facilityHighlights && hotel.facilityHighlights.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
+                  {hotel.facilityHighlights.map((feat, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-2xl bg-[#F5F7FA] border border-slate-200/60 flex items-start gap-3"
+                    >
+                      <div className="p-2 rounded-xl bg-white shadow-2xs shrink-0">
+                        {getHighlightIcon(feat.iconName)}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-[#142B45] leading-snug">
+                          {feat.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                          {feat.description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#142B45] leading-snug">
-                        {feat.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                        {feat.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
 
-            {/* 3b. About This Property */}
             <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
               <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-4">
                 About This Property
               </h3>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-light">
-                {hotel.about}
+                {hotel.about || hotel.description}
               </p>
             </section>
 
-            {/* 3c. Room Details */}
             {hotel.roomDetails && (
               <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
                 <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-4">
@@ -181,64 +284,74 @@ export default function HotelDetails() {
                 </h3>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/60 text-xs mb-6">
-                  <div>
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                      Suite Type
-                    </span>
-                    <span className="font-bold text-[#142B45] mt-0.5 block">
-                      {hotel.roomDetails.type}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                      Bedding
-                    </span>
-                    <span className="font-bold text-[#142B45] mt-0.5 block">
-                      {hotel.roomDetails.bedType}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                      Capacity
-                    </span>
-                    <span className="font-bold text-[#142B45] mt-0.5 block">
-                      {hotel.roomDetails.capacity}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                      Dimensions
-                    </span>
-                    <span className="font-bold text-[#142B45] mt-0.5 block flex items-center gap-1">
-                      <Maximize className="h-3 w-3 text-[#C6A15B]" />
-                      {hotel.roomDetails.size}
-                    </span>
-                  </div>
-                </div>
-
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  Included In-Room Luxuries
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {hotel.roomDetails.features.map((feat, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      <span>{feat}</span>
+                  {hotel.roomDetails.type && (
+                    <div>
+                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
+                        Suite Type
+                      </span>
+                      <span className="font-bold text-[#142B45] mt-0.5 block">
+                        {hotel.roomDetails.type}
+                      </span>
                     </div>
-                  ))}
+                  )}
+
+                  {hotel.roomDetails.bedType && (
+                    <div>
+                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
+                        Bedding
+                      </span>
+                      <span className="font-bold text-[#142B45] mt-0.5 block">
+                        {hotel.roomDetails.bedType}
+                      </span>
+                    </div>
+                  )}
+
+                  {hotel.roomDetails.capacity && (
+                    <div>
+                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
+                        Capacity
+                      </span>
+                      <span className="font-bold text-[#142B45] mt-0.5 block">
+                        {hotel.roomDetails.capacity}
+                      </span>
+                    </div>
+                  )}
+
+                  {hotel.roomDetails.size && (
+                    <div>
+                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
+                        Dimensions
+                      </span>
+                      <span className="font-bold text-[#142B45] mt-0.5 block flex items-center gap-1">
+                        <Maximize className="h-3 w-3 text-[#C6A15B]" />
+                        {hotel.roomDetails.size}
+                      </span>
+                    </div>
+                  )}
                 </div>
+
+                {hotel.roomDetails.features && hotel.roomDetails.features.length > 0 && (
+                  <>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                      Included In-Room Luxuries
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {hotel.roomDetails.features.map((feat, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </section>
             )}
 
-            {/* 3d. Hotel Amenities & Highlights Grid */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
               <HotelAmenities amenities={hotel.amenities} />
             </div>
 
-            {/* 3e. House Rules */}
             {hotel.houseRules && (
               <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
                 <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-4">
@@ -266,13 +379,11 @@ export default function HotelDetails() {
               </section>
             )}
 
-            {/* 3f. Guest Reviews */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
               <HotelReviews hotel={hotel} />
             </div>
           </div>
 
-          {/* Right Column (Sticky Booking & Availability Card) */}
           <div className="lg:col-span-1">
             <AvailabilityCard hotel={hotel} />
           </div>
@@ -283,4 +394,3 @@ export default function HotelDetails() {
     </div>
   )
 }
-
