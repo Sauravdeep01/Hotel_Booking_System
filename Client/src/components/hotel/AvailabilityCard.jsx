@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
 import {
@@ -11,6 +11,7 @@ import {
   Sparkles,
   ArrowRight,
   Search,
+  Bed,
 } from 'lucide-react'
 import { savePendingBooking, createBooking } from '../../utils/bookingStorage'
 
@@ -21,7 +22,12 @@ const getTomorrowStr = () => {
   return d.toISOString().split('T')[0]
 }
 
-export default function AvailabilityCard({ hotel }) {
+export default function AvailabilityCard({
+  hotel,
+  selectedRoom,
+  onSelectRoom,
+  onRoomRequired,
+}) {
   const navigate = useNavigate()
   const { isSignedIn } = useAuth()
   const { user } = useUser()
@@ -34,6 +40,18 @@ export default function AvailabilityCard({ hotel }) {
   const [isAvailable, setIsAvailable] = useState(false)
   const [statusMessage, setStatusMessage] = useState(null)
 
+  // Clear room validation error when room is selected
+  useEffect(() => {
+    if (selectedRoom) {
+      if (
+        statusMessage?.type === 'error' &&
+        statusMessage?.text?.toLowerCase().includes('room type')
+      ) {
+        setStatusMessage(null)
+      }
+    }
+  }, [selectedRoom])
+
   // Calculate duration of stay in nights
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1
@@ -45,7 +63,9 @@ export default function AvailabilityCard({ hotel }) {
   }
 
   const nights = calculateNights()
-  const currentPrice = hotel.price || 350
+  const currentPrice = selectedRoom ? selectedRoom.price : hotel.price || 350
+  const roomName = selectedRoom ? selectedRoom.roomType : null
+  const roomImage = selectedRoom?.images?.[0] || hotel.image
   const priceUnit = hotel.priceUnit || 'night'
   const basePrice = currentPrice * nights
   const discountAmount = Math.round(basePrice * 0.15)
@@ -60,7 +80,10 @@ export default function AvailabilityCard({ hotel }) {
     }
 
     if (new Date(checkOut) <= new Date(checkIn)) {
-      setStatusMessage({ type: 'error', text: 'Check-out date must be strictly after check-in date.' })
+      setStatusMessage({
+        type: 'error',
+        text: 'Check-out date must be strictly after check-in date.',
+      })
       setIsAvailable(false)
       return false
     }
@@ -68,13 +91,27 @@ export default function AvailabilityCard({ hotel }) {
     return true
   }
 
-  // Handle action: verify availability first, then proceed to booking
+  // Handle action: verify room selection and dates first, then check availability or book
   const handleActionClick = (e) => {
     e.preventDefault()
 
-    if (!isAvailable) {
-      if (!validateDates()) return
+    // 1. Mandatory Room Type Selection
+    if (!selectedRoom) {
+      const msg = 'Please select a room type before booking.'
+      setStatusMessage({
+        type: 'error',
+        text: msg,
+      })
+      if (onRoomRequired) {
+        onRoomRequired(msg)
+      }
+      return
+    }
 
+    // 2. Validate booking dates
+    if (!validateDates()) return
+
+    if (!isAvailable) {
       setIsChecking(true)
       setStatusMessage(null)
 
@@ -83,20 +120,22 @@ export default function AvailabilityCard({ hotel }) {
         setIsAvailable(true)
         setStatusMessage({
           type: 'success',
-          text: `Room is available for ${nights} ${nights === 1 ? 'night' : 'nights'}! Click Book Now to secure your stay.`,
+          text: `${selectedRoom.roomType} is available for ${nights} ${
+            nights === 1 ? 'night' : 'nights'
+          }! Click Book Now to secure your stay.`,
         })
       }, 500)
       return
     }
 
-    if (!validateDates()) return
-
     const bookingPayload = {
-      hotelId: hotel.id,
+      hotelId: hotel.id || hotel._id,
       hotelName: hotel.name,
-      hotelImage: hotel.image,
+      hotelImage: roomImage,
       location: hotel.location,
-      roomType: hotel.roomDetails?.type || hotel.roomType,
+      roomType: selectedRoom.roomType,
+      roomName: selectedRoom.name || selectedRoom.roomType,
+      selectedRoomPrice: selectedRoom.price,
       checkIn,
       checkOut,
       nights,
@@ -113,6 +152,10 @@ export default function AvailabilityCard({ hotel }) {
     if (!isSignedIn) {
       // Save pending booking for unauthenticated users redirecting through Clerk login
       savePendingBooking(bookingPayload)
+      try {
+        const hotelKey = hotel.id || hotel._id
+        sessionStorage.setItem(`stayease_selected_room_${hotelKey}`, JSON.stringify(selectedRoom))
+      } catch (err) {}
       openSignIn({
         fallbackRedirectUrl: '/my-bookings',
         forceRedirectUrl: '/my-bookings',
@@ -136,14 +179,41 @@ export default function AvailabilityCard({ hotel }) {
     setStatusMessage(null)
   }
 
+  const handleRoomSelectChange = (roomTypeName) => {
+    if (!roomTypeName) {
+      if (onSelectRoom) onSelectRoom(null)
+      setIsAvailable(false)
+      return
+    }
+
+    const available =
+      hotel.roomTypes && hotel.roomTypes.length > 0
+        ? hotel.roomTypes
+        : [
+            { roomType: 'Single Bed', price: Math.round((hotel.price || 350) * 0.75) },
+            { roomType: 'Double Bed', price: hotel.price || 350 },
+            { roomType: 'Luxury Room', price: Math.round((hotel.price || 350) * 1.4) },
+            { roomType: 'Family Suite', price: Math.round((hotel.price || 350) * 2.0) },
+          ]
+
+    const matched = available.find((r) => r.roomType === roomTypeName)
+    if (matched && onSelectRoom) {
+      onSelectRoom(matched)
+      setIsAvailable(false)
+    }
+  }
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl p-6 sm:p-7 sticky top-24 transition-all">
-      <div className="flex items-baseline justify-between pb-5 border-b border-slate-100">
+      <div className="flex items-start justify-between pb-5 border-b border-slate-100 gap-3">
         <div>
-          <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
-            Starting rate
+          <span className="text-[10px] uppercase font-bold text-[#C6A15B] tracking-wider block mb-0.5">
+            {selectedRoom ? 'Selected Room' : 'Starting rate'}
           </span>
-          <div className="flex items-baseline gap-1 mt-0.5">
+          <span className="text-xs font-bold text-[#142B45] block truncate max-w-[180px] mb-1">
+            {selectedRoom ? selectedRoom.roomType : 'No Room Selected'}
+          </span>
+          <div className="flex items-baseline gap-1">
             <span className="font-serif text-3xl font-bold text-[#142B45]">
               ${currentPrice}
             </span>
@@ -152,7 +222,7 @@ export default function AvailabilityCard({ hotel }) {
         </div>
 
         {hotel.discount && (
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1 shadow-2xs">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1 shadow-2xs shrink-0">
             <Sparkles className="h-3 w-3" />
             {hotel.discount}
           </span>
@@ -160,6 +230,34 @@ export default function AvailabilityCard({ hotel }) {
       </div>
 
       <form onSubmit={handleActionClick} className="mt-5 space-y-3.5">
+        {/* Room Type Selector dropdown in booking card */}
+        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
+          <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <Bed className="h-3 w-3 text-[#C6A15B]" />
+            Room Type <span className="text-rose-500">*</span>
+          </label>
+          <select
+            value={selectedRoom?.roomType || ''}
+            onChange={(e) => handleRoomSelectChange(e.target.value)}
+            className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#142B45] focus:outline-hidden cursor-pointer"
+          >
+            <option value="">-- Select Room Type --</option>
+            {(hotel.roomTypes && hotel.roomTypes.length > 0
+              ? hotel.roomTypes
+              : [
+                  { roomType: 'Single Bed', price: Math.round((hotel.price || 350) * 0.75) },
+                  { roomType: 'Double Bed', price: hotel.price || 350 },
+                  { roomType: 'Luxury Room', price: Math.round((hotel.price || 350) * 1.4) },
+                  { roomType: 'Family Suite', price: Math.round((hotel.price || 350) * 2.0) },
+                ]
+            ).map((r) => (
+              <option key={r.roomType} value={r.roomType}>
+                {r.roomType} (${r.price}/night)
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 gap-2.5">
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-[#C6A15B] transition-colors">
             <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -210,7 +308,7 @@ export default function AvailabilityCard({ hotel }) {
         <button
           type="submit"
           disabled={isChecking}
-          className={`w-full flex items-center justify-center gap-2 font-semibold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] text-xs uppercase tracking-wider ${
+          className={`w-full flex items-center justify-center gap-2 font-semibold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] text-xs uppercase tracking-wider cursor-pointer ${
             isAvailable
               ? 'bg-[#142B45] hover:bg-[#C6A15B] text-white ring-2 ring-[#C6A15B]/30'
               : 'bg-[#C6A15B] hover:bg-[#b58f4a] text-white disabled:bg-slate-300'
@@ -253,6 +351,12 @@ export default function AvailabilityCard({ hotel }) {
       )}
 
       <div className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-600 space-y-2.5">
+        {!selectedRoom && (
+          <div className="p-2 rounded-xl bg-amber-50/80 border border-amber-200/60 text-[11px] text-amber-800 text-center font-medium">
+            Estimated base rate • Select a room type for exact pricing
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <span>
             ${currentPrice} × {nights} {nights === 1 ? 'night' : 'nights'}

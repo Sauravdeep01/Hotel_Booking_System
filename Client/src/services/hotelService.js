@@ -86,6 +86,88 @@ export const normalizeHotel = (apiHotel) => {
       ? apiHotel.reviewCount
       : template.reviewsCount || 100
 
+  const roomTypes =
+    Array.isArray(apiHotel.roomTypes) && apiHotel.roomTypes.length > 0
+      ? apiHotel.roomTypes.map((rt) => {
+          const rawImgs =
+            Array.isArray(rt.images) && rt.images.length > 0 ? rt.images : images
+          const sanitizedImgs = rawImgs
+            .map((img) => (typeof img === 'string' ? img.replace(/^http:\/\//i, 'https://') : ''))
+            .filter(Boolean)
+
+          return {
+            ...rt,
+            roomType: rt.roomType || rt.name || 'Double Bed',
+            name: rt.name || rt.roomType || 'Deluxe Suite',
+            images: sanitizedImgs.length > 0 ? sanitizedImgs : [primaryImage],
+            price: typeof rt.price === 'number' && rt.price > 0 ? rt.price : 350,
+            capacity: typeof rt.capacity === 'number' && rt.capacity > 0 ? rt.capacity : 2,
+            bedConfiguration: rt.bedConfiguration || '1 King Bed',
+            amenities:
+              Array.isArray(rt.amenities) && rt.amenities.length > 0
+                ? rt.amenities
+                : ['Free High-Speed Wi-Fi', 'Ensuite Bathroom', 'Air Conditioning'],
+            shortDescription: rt.shortDescription || '',
+          }
+        })
+      : [
+          {
+            roomType: 'Single Bed',
+            name: 'Solo Explorer Room',
+            images: [primaryImage],
+            price: typeof apiHotel.price === 'number' && apiHotel.price > 0 ? apiHotel.price : 350,
+            capacity: 1,
+            bedConfiguration: '1 Queen Bed',
+            amenities: ['Free High-Speed Wi-Fi', 'Private Bathroom', 'Air Conditioning'],
+            shortDescription: 'Ideal for solo luxury travelers seeking peaceful comfort.',
+          },
+          {
+            roomType: 'Double Bed',
+            name: 'Deluxe Horizon Suite',
+            images: [images[1] || primaryImage],
+            price: Math.round(
+              (typeof apiHotel.price === 'number' && apiHotel.price > 0 ? apiHotel.price : 350) *
+                1.5
+            ),
+            capacity: 2,
+            bedConfiguration: '1 King Bed',
+            amenities: ['King Bed', 'Room Service', 'Balcony View', 'Free Wi-Fi'],
+            shortDescription: 'Spacious suite designed for couples with private balcony vistas.',
+          },
+          {
+            roomType: 'Luxury Room',
+            name: 'Panoramic Plunge Suite',
+            images: [primaryImage],
+            price: Math.round(
+              (typeof apiHotel.price === 'number' && apiHotel.price > 0 ? apiHotel.price : 350) *
+                2.5
+            ),
+            capacity: 3,
+            bedConfiguration: '1 King Bed + 1 Daybed',
+            amenities: ['Panoramic View', 'Jacuzzi Plunge Tub', 'Butler Service'],
+            shortDescription: 'Top-tier luxury residence featuring plunge pool and bespoke butler service.',
+          },
+          {
+            roomType: 'Family Suite',
+            name: 'Royal Multi-Bedroom Villa',
+            images: [images[1] || primaryImage],
+            price: Math.round(
+              (typeof apiHotel.price === 'number' && apiHotel.price > 0 ? apiHotel.price : 350) * 4
+            ),
+            capacity: 5,
+            bedConfiguration: '2 King Beds + 1 Rollaway',
+            amenities: ['2 Master Bedrooms', 'Private Pool', 'Dedicated Host'],
+            shortDescription: 'Expansive family residence with dual bedrooms and private dining.',
+          },
+        ]
+
+  const startingPrice =
+    typeof apiHotel.price === 'number' && apiHotel.price > 0
+      ? apiHotel.price
+      : roomTypes.length > 0
+        ? Math.min(...roomTypes.map((r) => r.price).filter((p) => typeof p === 'number' && p > 0))
+        : template.price || 350
+
   return {
     ...template,
     ...apiHotel,
@@ -102,7 +184,8 @@ export const normalizeHotel = (apiHotel) => {
     rating: hotelRating,
     reviewCount: countReviews,
     reviewsCount: countReviews,
-    price: template.price || 350,
+    price: startingPrice,
+    roomTypes,
     isFeatured: apiHotel.isFeatured ?? template.isFeatured ?? false,
     isBestSeller: apiHotel.isFeatured ?? template.isBestSeller ?? false,
     image: primaryImage,

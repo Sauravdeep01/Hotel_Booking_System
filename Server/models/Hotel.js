@@ -1,5 +1,47 @@
 import mongoose from 'mongoose'
 
+const roomTypeSchema = new mongoose.Schema(
+  {
+    roomType: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      trim: true,
+    },
+    images: {
+      type: [String],
+      default: [],
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    capacity: {
+      type: Number,
+      default: 2,
+    },
+    bedConfiguration: {
+      type: String,
+      default: '1 King Bed',
+      trim: true,
+    },
+    amenities: {
+      type: [String],
+      default: [],
+    },
+    shortDescription: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+  },
+  { _id: false }
+)
+
 const hotelSchema = new mongoose.Schema(
   {
     name: {
@@ -41,6 +83,15 @@ const hotelSchema = new mongoose.Schema(
     },
     amenities: {
       type: [String],
+      default: [],
+    },
+    price: {
+      type: Number,
+      default: 350,
+      min: 0,
+    },
+    roomTypes: {
+      type: [roomTypeSchema],
       default: [],
     },
     rating: {

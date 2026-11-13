@@ -15,6 +15,9 @@ import {
   Maximize,
   AlertCircle,
   RotateCcw,
+  Users,
+  Bed,
+  Check,
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
@@ -25,6 +28,7 @@ import HotelAmenities from '../components/hotel/HotelAmenities'
 import HotelReviews from '../components/hotel/HotelReviews'
 import { getHotelById, normalizeHotel } from '../services/hotelService'
 import { FEATURED_HOTELS } from '../constants/hotels'
+import { getPendingBooking } from '../utils/bookingStorage'
 
 export default function HotelDetails() {
   const { id } = useParams()
@@ -32,6 +36,63 @@ export default function HotelDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [invalidId, setInvalidId] = useState(false)
+  const [selectedRoom, setSelectedRoom] = useState(null)
+  const [roomError, setRoomError] = useState(null)
+
+  // Restore previously selected room from session/pending if available for this hotel
+  useEffect(() => {
+    if (!hotel) return
+
+    try {
+      // 1. Check pending booking from Clerk login redirect
+      const pending = getPendingBooking()
+      if (pending && (pending.hotelId === hotel.id || pending.hotelId === hotel._id)) {
+        const matched = hotel.roomTypes?.find(
+          (r) => r.roomType === pending.roomType || r.name === pending.roomType
+        )
+        if (matched) {
+          setSelectedRoom(matched)
+          return
+        }
+      }
+
+      // 2. Check hotel-specific session storage
+      const hotelKey = hotel.id || hotel._id
+      const saved = sessionStorage.getItem(`stayease_selected_room_${hotelKey}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const matched = hotel.roomTypes?.find((r) => r.roomType === parsed.roomType)
+        if (matched) {
+          setSelectedRoom(matched)
+          return
+        }
+      }
+    } catch (e) {
+      console.error('Error restoring selected room:', e)
+    }
+
+    // Default: unselected so user makes an explicit choice
+    setSelectedRoom(null)
+  }, [hotel?._id || hotel?.id])
+
+  const handleSelectRoom = (room) => {
+    setSelectedRoom(room)
+    setRoomError(null)
+    try {
+      const hotelKey = hotel?.id || hotel?._id
+      if (hotelKey) {
+        sessionStorage.setItem(`stayease_selected_room_${hotelKey}`, JSON.stringify(room))
+      }
+    } catch (e) {}
+  }
+
+  const handleRoomRequired = (msg) => {
+    setRoomError(msg || 'Please select a room type before booking.')
+    const el = document.getElementById('room-type-selection')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
 
   // Fetch hotel by ID from backend whenever id changes
   const loadHotel = async () => {
@@ -336,76 +397,145 @@ export default function HotelDetails() {
               </p>
             </section>
 
-            {hotel.roomDetails && (
-              <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
-                <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-4">
-                  Room & Suite Specifications
-                </h3>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/60 text-xs mb-6">
-                  {hotel.roomDetails.type && (
-                    <div>
-                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                        Suite Type
-                      </span>
-                      <span className="font-bold text-[#142B45] mt-0.5 block">
-                        {hotel.roomDetails.type}
-                      </span>
-                    </div>
-                  )}
-
-                  {hotel.roomDetails.bedType && (
-                    <div>
-                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                        Bedding
-                      </span>
-                      <span className="font-bold text-[#142B45] mt-0.5 block">
-                        {hotel.roomDetails.bedType}
-                      </span>
-                    </div>
-                  )}
-
-                  {hotel.roomDetails.capacity && (
-                    <div>
-                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                        Capacity
-                      </span>
-                      <span className="font-bold text-[#142B45] mt-0.5 block">
-                        {hotel.roomDetails.capacity}
-                      </span>
-                    </div>
-                  )}
-
-                  {hotel.roomDetails.size && (
-                    <div>
-                      <span className="text-slate-400 uppercase font-semibold text-[10px] block">
-                        Dimensions
-                      </span>
-                      <span className="font-bold text-[#142B45] mt-0.5 block flex items-center gap-1">
-                        <Maximize className="h-3 w-3 text-[#C6A15B]" />
-                        {hotel.roomDetails.size}
-                      </span>
-                    </div>
-                  )}
+            {/* Select Your Room Type Section */}
+            <section
+              id="room-type-selection"
+              className={`bg-white rounded-3xl p-6 sm:p-7 border transition-all duration-300 shadow-xs ${
+                roomError ? 'border-rose-400 ring-2 ring-rose-200' : 'border-slate-200/80'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4 pb-3 border-b border-slate-100">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#C6A15B] block mb-0.5">
+                    Accommodation Options
+                  </span>
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#142B45]">
+                    Select Your Room Type
+                  </h3>
                 </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  * Selection required to book
+                </span>
+              </div>
 
-                {hotel.roomDetails.features && hotel.roomDetails.features.length > 0 && (
-                  <>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                      Included In-Room Luxuries
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {hotel.roomDetails.features.map((feat, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>{feat}</span>
+              <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                Choose your preferred room type to update rates and proceed with your reservation:
+              </p>
+
+              {/* Compact selectable options (radio buttons / pill-style cards) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(hotel.roomTypes && hotel.roomTypes.length > 0
+                  ? hotel.roomTypes
+                  : [
+                      {
+                        roomType: 'Single Bed',
+                        price: Math.round((hotel.price || 350) * 0.75),
+                        bedConfiguration: '1 Twin Bed',
+                      },
+                      {
+                        roomType: 'Double Bed',
+                        price: hotel.price || 350,
+                        bedConfiguration: '1 Queen Bed',
+                      },
+                      {
+                        roomType: 'Luxury Room',
+                        price: Math.round((hotel.price || 350) * 1.4),
+                        bedConfiguration: '1 King Bed',
+                      },
+                      {
+                        roomType: 'Family Suite',
+                        price: Math.round((hotel.price || 350) * 2.0),
+                        bedConfiguration: '2 Queen Beds',
+                      },
+                    ]
+                ).map((room) => {
+                  const isSelected = selectedRoom?.roomType === room.roomType
+
+                  return (
+                    <button
+                      type="button"
+                      key={room.roomType}
+                      onClick={() => handleSelectRoom(room)}
+                      className={`cursor-pointer w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] ${
+                        isSelected
+                          ? 'border-[#C6A15B] bg-[#C6A15B]/10 ring-2 ring-[#C6A15B]/30 shadow-xs'
+                          : 'border-slate-200/90 bg-white hover:border-[#C6A15B]/40 hover:bg-slate-50/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Radio Circle */}
+                        <div
+                          className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected
+                              ? 'border-[#C6A15B] bg-[#C6A15B]'
+                              : 'border-slate-300 bg-white'
+                          }`}
+                        >
+                          {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                         </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </section>
-            )}
+
+                        <div>
+                          <span
+                            className={`text-xs sm:text-sm font-semibold block leading-tight ${
+                              isSelected ? 'text-[#142B45]' : 'text-slate-700'
+                            }`}
+                          >
+                            {room.roomType}
+                          </span>
+                          {room.bedConfiguration && (
+                            <span className="text-[11px] text-slate-400 font-light block mt-0.5">
+                              {room.bedConfiguration}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 pl-2">
+                        <span className="text-sm sm:text-base font-bold text-[#142B45] font-serif">
+                          ${room.price}
+                        </span>
+                        <span className="text-[11px] text-slate-500 block -mt-0.5">/ night</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Display selected room type and its price */}
+              {selectedRoom ? (
+                <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/50 border border-[#C6A15B]/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-[#C6A15B] shrink-0" />
+                    <span className="text-slate-500 font-medium">Selected Room:</span>
+                    <span className="font-bold text-[#142B45]">{selectedRoom.roomType}</span>
+                    {selectedRoom.name && selectedRoom.name !== selectedRoom.roomType && (
+                      <span className="text-slate-400 hidden sm:inline">
+                        • {selectedRoom.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-bold text-[#142B45] font-serif text-sm">
+                      ${selectedRoom.price}
+                    </span>
+                    <span className="text-slate-500 text-[11px]">/ night</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <span className="text-[#C6A15B] font-bold">•</span>
+                  <span>No room type selected yet. Please choose an option above to book.</span>
+                </div>
+              )}
+
+              {/* Validation Error Message */}
+              {roomError && (
+                <div className="mt-3.5 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                  <span className="font-semibold">{roomError}</span>
+                </div>
+              )}
+            </section>
 
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
               <HotelAmenities amenities={hotel.amenities} />
@@ -444,7 +574,12 @@ export default function HotelDetails() {
           </div>
 
           <div className="lg:col-span-1">
-            <AvailabilityCard hotel={hotel} />
+            <AvailabilityCard
+              hotel={hotel}
+              selectedRoom={selectedRoom}
+              onSelectRoom={handleSelectRoom}
+              onRoomRequired={handleRoomRequired}
+            />
           </div>
         </div>
       </main>
