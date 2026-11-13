@@ -178,6 +178,16 @@ export const normalizeHotel = (apiHotel) => {
     shortDescription:
       apiHotel.description || template.shortDescription || apiHotel.name,
     about: apiHotel.description || template.about || '',
+    city:
+      (typeof apiHotel.location === 'object' && apiHotel.location?.city) ||
+      apiHotel.city ||
+      locationStr.split(',')?.[0]?.trim() ||
+      '',
+    country:
+      (typeof apiHotel.location === 'object' && apiHotel.location?.country) ||
+      apiHotel.country ||
+      locationStr.split(',')?.[1]?.trim() ||
+      '',
     location: locationStr,
     fullAddress,
     starRating: apiHotel.starRating || template.starRating || 5,
@@ -299,3 +309,39 @@ export const getHotelById = async (id) => {
     data: normalizeHotel(result.data),
   }
 }
+
+// Fetch unique destination cities from active hotels in MongoDB
+export const getUniqueDestinations = async () => {
+  try {
+    const res = await getAllHotels()
+    const hotels = res.data || []
+    const citiesSet = new Set()
+
+    hotels.forEach((hotel) => {
+      if (hotel.city && typeof hotel.city === 'string' && hotel.city.trim()) {
+        citiesSet.add(hotel.city.trim())
+      } else if (hotel.location) {
+        if (typeof hotel.location === 'object' && hotel.location.city) {
+          citiesSet.add(hotel.location.city.trim())
+        } else if (typeof hotel.location === 'string') {
+          const cityPart = hotel.location.split(',')[0]?.trim()
+          if (cityPart) citiesSet.add(cityPart)
+        }
+      }
+    })
+
+    const sortedCities = Array.from(citiesSet).filter(Boolean).sort((a, b) => a.localeCompare(b))
+    if (sortedCities.length > 0) {
+      return sortedCities
+    }
+  } catch (err) {
+    console.warn('Failed to fetch destinations dynamically from MongoDB, using fallback', err)
+  }
+
+  // Graceful fallback from FEATURED_HOTELS if API is down or empty
+  const fallbackSet = new Set(
+    FEATURED_HOTELS.map((h) => h.location?.split(',')?.[0]?.trim()).filter(Boolean)
+  )
+  return Array.from(fallbackSet).sort((a, b) => a.localeCompare(b))
+}
+

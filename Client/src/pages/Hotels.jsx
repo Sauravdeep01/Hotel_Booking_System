@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Star,
   MapPin,
@@ -10,10 +10,11 @@ import {
   Hotel as HotelIcon,
   AlertCircle,
   Check,
+  X,
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
-import { getAllHotels } from '../services/hotelService'
+import { getAllHotels, formatLocation } from '../services/hotelService'
 
 // Verified fallback Cloudinary image
 const FALLBACK_IMAGE = 'https://res.cloudinary.com/demo/image/upload/pool.jpg'
@@ -37,6 +38,14 @@ const SORT_OPTIONS = [
 
 export default function Hotels() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Query parameters from Hero search
+  const destinationParam = (searchParams.get('destination') || '').trim()
+  const checkInParam = (searchParams.get('checkIn') || '').trim()
+  const checkOutParam = (searchParams.get('checkOut') || '').trim()
+  const guestsParam = (searchParams.get('guests') || '').trim()
+
   const [hotels, setHotels] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -80,21 +89,63 @@ export default function Hotels() {
     )
   }
 
-  // Clear all filters back to default
+  // Clear sidebar filters back to default
   const handleClearFilters = () => {
     setSelectedRoomTypes([])
     setSelectedPriceRange('')
     setSortBy('newest')
   }
 
-  const hasActiveFilters =
-    selectedRoomTypes.length > 0 || selectedPriceRange !== '' || sortBy !== 'newest'
+  // Clear destination query param
+  const handleClearDestination = () => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('destination')
+    setSearchParams(nextParams)
+  }
 
-  // Filter and sort hotel collection based on active filter sidebar
+  // Clear everything including destination and sidebar filters
+  const handleClearAll = () => {
+    setSelectedRoomTypes([])
+    setSelectedPriceRange('')
+    setSortBy('newest')
+    setSearchParams({})
+  }
+
+  const hasActiveFilters =
+    selectedRoomTypes.length > 0 ||
+    selectedPriceRange !== '' ||
+    sortBy !== 'newest' ||
+    Boolean(destinationParam)
+
+  // Filter and sort hotel collection based on active filter sidebar and destination search
   const filteredHotels = useMemo(() => {
     return hotels
       .filter((hotel) => {
-        // 1. Popular Filters: Room Types (Multiple selections allowed)
+        // 1. Destination Search Filter (matches city, country, location, or name)
+        if (destinationParam) {
+          const q = destinationParam.toLowerCase()
+          const hotelCity = (typeof hotel.city === 'string' ? hotel.city : '').toLowerCase()
+          const hotelLoc = (
+            typeof hotel.location === 'string'
+              ? hotel.location
+              : formatLocation(hotel.location)
+          ).toLowerCase()
+          const hotelName = (hotel.name || '').toLowerCase()
+          const hotelCountry = (
+            typeof hotel.country === 'string' ? hotel.country : ''
+          ).toLowerCase()
+
+          const matches =
+            hotelCity.includes(q) ||
+            hotelLoc.includes(q) ||
+            hotelName.includes(q) ||
+            hotelCountry.includes(q) ||
+            q.includes(hotelCity)
+
+          if (!matches) return false
+        }
+
+        // 2. Popular Filters: Room Types (Multiple selections allowed)
         if (selectedRoomTypes.length > 0) {
           const hotelRoomTypes = Array.isArray(hotel.roomTypes)
             ? hotel.roomTypes.map((r) => (r.roomType || r.type || '').trim())
@@ -106,12 +157,13 @@ export default function Hotels() {
           if (!matchesAnySelectedRoom) return false
         }
 
-        // 2. Price Range Filter
+        // 3. Price Range Filter
         if (selectedPriceRange) {
           const startingPrice = hotel.price ?? 350
-          const allPrices = Array.isArray(hotel.roomTypes) && hotel.roomTypes.length > 0
-            ? [startingPrice, ...hotel.roomTypes.map((r) => r.price)]
-            : [startingPrice]
+          const allPrices =
+            Array.isArray(hotel.roomTypes) && hotel.roomTypes.length > 0
+              ? [startingPrice, ...hotel.roomTypes.map((r) => r.price)]
+              : [startingPrice]
 
           if (selectedPriceRange === '0-500') {
             const matches = allPrices.some((p) => p >= 0 && p <= 500)
@@ -147,7 +199,7 @@ export default function Hotels() {
         }
         return 0
       })
-  }, [hotels, selectedRoomTypes, selectedPriceRange, sortBy])
+  }, [hotels, selectedRoomTypes, selectedPriceRange, sortBy, destinationParam])
 
   // Resolve hotel primary image
   const getHotelImage = (hotel) => {
@@ -215,6 +267,47 @@ export default function Hotels() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT: Vertical List of Hotel Cards */}
           <div className="lg:col-span-8 space-y-6">
+            {/* Active Destination Search Banner */}
+            {destinationParam && (
+              <div className="p-4 rounded-2xl bg-white border border-[#C6A15B]/30 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-[#C6A15B]/15 text-[#C6A15B] flex items-center justify-center shrink-0">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Destination Search
+                    </div>
+                    <div className="text-sm font-bold text-[#142B45] flex flex-wrap items-center gap-2">
+                      <span>{destinationParam}</span>
+                      {checkInParam && checkOutParam && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-xs text-slate-600 font-medium">
+                            {checkInParam} to {checkOutParam}
+                          </span>
+                        </>
+                      )}
+                      {guestsParam && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-xs text-slate-600 font-medium">{guestsParam}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearDestination}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#142B45] hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors self-start sm:self-auto cursor-pointer"
+                >
+                  <span>Clear Destination</span>
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Loading Skeleton */}
             {loading && (
               <div className="space-y-6">
@@ -269,22 +362,37 @@ export default function Hotels() {
                   <HotelIcon className="h-7 w-7" />
                 </div>
                 <h3 className="font-serif text-2xl font-bold text-[#142B45] mb-2">
-                  No matching hotels found
+                  {destinationParam
+                    ? `No luxury hotels found in "${destinationParam}"`
+                    : 'No matching hotels found'}
                 </h3>
                 <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 font-light">
-                  We couldn&apos;t find any properties matching your current room type or price
-                  filters. Try adjusting your selections.
+                  {destinationParam
+                    ? `We couldn't find any available luxury stays matching "${destinationParam}" with your selected room types or price filters. Try exploring all destinations or resetting your filters.`
+                    : "We couldn't find any properties matching your current room type or price filters. Try adjusting your selections."}
                 </p>
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={handleClearFilters}
-                    className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-6 py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    <span>Clear All Filters</span>
-                  </button>
-                )}
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {destinationParam && (
+                    <button
+                      type="button"
+                      onClick={handleClearDestination}
+                      className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white px-5 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span>Explore All Destinations</span>
+                    </button>
+                  )}
+                  {(selectedRoomTypes.length > 0 || selectedPriceRange !== '') && (
+                    <button
+                      type="button"
+                      onClick={handleClearFilters}
+                      className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-[#142B45] px-5 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span>Reset Filters</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -297,8 +405,8 @@ export default function Hotels() {
                   const displayLocation =
                     typeof hotel.location === 'object' && hotel.location !== null
                       ? [hotel.location.city, hotel.location.country].filter(Boolean).join(', ') ||
-                        hotel.location.address ||
-                        ''
+                      hotel.location.address ||
+                      ''
                       : hotel.location || ''
 
                   const startingPrice = hotel.price ?? 350
@@ -404,13 +512,25 @@ export default function Hotels() {
                             </div>
                           </div>
 
-                          <Link
-                            to={`/hotels/${hotelId}`}
-                            className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white text-xs font-semibold px-5 py-3 rounded-xl transition-all shadow-xs hover:shadow-md active:scale-95 shrink-0 cursor-pointer"
-                          >
-                            <span>View Details</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
+                          {/* Construct detail link with search params if available */}
+                          {(() => {
+                            const detailParams = new URLSearchParams()
+                            if (checkInParam) detailParams.set('checkIn', checkInParam)
+                            if (checkOutParam) detailParams.set('checkOut', checkOutParam)
+                            if (guestsParam) detailParams.set('guests', guestsParam)
+                            const queryStr = detailParams.toString()
+                            const detailUrl = `/hotels/${hotelId}${queryStr ? `?${queryStr}` : ''}`
+
+                            return (
+                              <Link
+                                to={detailUrl}
+                                className="inline-flex items-center gap-2 bg-[#142B45] hover:bg-[#C6A15B] text-white text-xs font-semibold px-5 py-3 rounded-xl transition-all shadow-xs hover:shadow-md active:scale-95 shrink-0 cursor-pointer"
+                              >
+                                <span>View Details</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </Link>
+                            )
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -422,9 +542,8 @@ export default function Hotels() {
 
           {/* RIGHT: Filter Sidebar */}
           <aside
-            className={`lg:col-span-4 ${
-              mobileFilterOpen ? 'block' : 'hidden'
-            } lg:block`}
+            className={`lg:col-span-4 ${mobileFilterOpen ? 'block' : 'hidden'
+              } lg:block`}
           >
             <div className="sticky top-24 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
               {/* Filter Header */}
@@ -459,11 +578,10 @@ export default function Hotels() {
                         className="flex items-center gap-3 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none hover:text-[#142B45] transition-colors"
                       >
                         <div
-                          className={`h-4 w-4 rounded border flex items-center justify-center transition-all ${
-                            isChecked
+                          className={`h-4 w-4 rounded border flex items-center justify-center transition-all ${isChecked
                               ? 'bg-[#142B45] border-[#142B45] text-white'
                               : 'border-slate-300 bg-white'
-                          }`}
+                            }`}
                         >
                           {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
                         </div>
@@ -494,9 +612,8 @@ export default function Hotels() {
                         className="flex items-center gap-3 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none hover:text-[#142B45] transition-colors"
                       >
                         <div
-                          className={`h-4 w-4 rounded-full border flex items-center justify-center transition-all ${
-                            isSelected ? 'border-[#C6A15B]' : 'border-slate-300 bg-white'
-                          }`}
+                          className={`h-4 w-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-[#C6A15B]' : 'border-slate-300 bg-white'
+                            }`}
                         >
                           {isSelected && <div className="h-2 w-2 rounded-full bg-[#C6A15B]" />}
                         </div>
@@ -528,9 +645,8 @@ export default function Hotels() {
                         className="flex items-center gap-3 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none hover:text-[#142B45] transition-colors"
                       >
                         <div
-                          className={`h-4 w-4 rounded-full border flex items-center justify-center transition-all ${
-                            isSelected ? 'border-[#C6A15B]' : 'border-slate-300 bg-white'
-                          }`}
+                          className={`h-4 w-4 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-[#C6A15B]' : 'border-slate-300 bg-white'
+                            }`}
                         >
                           {isSelected && <div className="h-2 w-2 rounded-full bg-[#C6A15B]" />}
                         </div>

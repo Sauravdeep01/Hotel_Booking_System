@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
 import {
   Calendar,
@@ -33,9 +33,20 @@ export default function AvailabilityCard({
   const { user } = useUser()
   const { openSignIn } = useClerk()
 
-  const [checkIn, setCheckIn] = useState(TODAY_STR)
-  const [checkOut, setCheckOut] = useState(getTomorrowStr)
-  const [guests, setGuests] = useState('2 Guests')
+  const [searchParams] = useSearchParams()
+  const queryCheckIn = searchParams.get('checkIn')
+  const queryCheckOut = searchParams.get('checkOut')
+  const queryGuests = searchParams.get('guests')
+
+  const [checkIn, setCheckIn] = useState(
+    queryCheckIn && queryCheckIn >= TODAY_STR ? queryCheckIn : TODAY_STR
+  )
+  const [checkOut, setCheckOut] = useState(
+    queryCheckOut && (!queryCheckIn || queryCheckOut > queryCheckIn)
+      ? queryCheckOut
+      : getTomorrowStr
+  )
+  const [guests, setGuests] = useState(queryGuests || '2 Guests')
   const [isChecking, setIsChecking] = useState(false)
   const [isAvailable, setIsAvailable] = useState(false)
   const [statusMessage, setStatusMessage] = useState(null)

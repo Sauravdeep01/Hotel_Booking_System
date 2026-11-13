@@ -134,7 +134,7 @@ export default function Navbar() {
               <UserButton
                 appearance={stayEaseClerkAppearance}
                 userProfileMode="modal"
-                fallbackRedirectUrl="/home"
+                afterSignOutUrl="/home"
               >
                 <UserButton.MenuItems>
                   <UserButton.Link
