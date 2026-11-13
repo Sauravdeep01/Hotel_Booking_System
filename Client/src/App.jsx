@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Hotels from './pages/Hotels'
 import HotelDetails from './pages/HotelDetails'
+import About from './pages/About'
 import MyBookings from './pages/MyBookings'
 import ProtectedRoute from './routes/ProtectedRoute'
 
@@ -17,7 +18,7 @@ export default function App() {
       <Route path="/offers" element={<Home />} />
       <Route path="/offers/:id" element={<Home />} />
       <Route path="/experience" element={<Home />} />
-      <Route path="/about" element={<Home />} />
+      <Route path="/about" element={<About />} />
 
       {/* Auth redirects */}
       <Route path="/login" element={<Navigate to="/home" replace />} />
