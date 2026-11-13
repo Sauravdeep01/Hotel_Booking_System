@@ -15,9 +15,8 @@ const sampleHotels = [
     },
     starRating: 5,
     images: [
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517700/hotel-1_a9ywnh.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517701/hotel-1-gallery-1_v78qws.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517702/hotel-1-gallery-2_plm12a.jpg',
+      'https://res.cloudinary.com/demo/image/upload/pool.jpg',
+      'https://res.cloudinary.com/demo/image/upload/beach.jpg',
     ],
     amenities: [
       'Private Infinity Pool',
@@ -43,9 +42,8 @@ const sampleHotels = [
     },
     starRating: 5,
     images: [
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517700/hotel-2_fcv55u.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517701/hotel-2-gallery-1_kl89op.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517702/hotel-2-gallery-2_yu71qa.jpg',
+      'https://res.cloudinary.com/demo/image/upload/castle.jpg',
+      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
     ],
     amenities: [
       'Eiffel Tower View',
@@ -71,9 +69,8 @@ const sampleHotels = [
     },
     starRating: 5,
     images: [
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517700/hotel-3_j9g52t.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517701/hotel-3-gallery-1_nm34gh.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517702/hotel-3-gallery-2_tr88mn.jpg',
+      'https://res.cloudinary.com/demo/image/upload/beach.jpg',
+      'https://res.cloudinary.com/demo/image/upload/pool.jpg',
     ],
     amenities: [
       'Private Beach Access',
@@ -99,9 +96,8 @@ const sampleHotels = [
     },
     starRating: 5,
     images: [
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517700/hotel-4_y1hoxl.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517701/hotel-4-gallery-1_vb44kj.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517702/hotel-4-gallery-2_qw12zx.jpg',
+      'https://res.cloudinary.com/demo/image/upload/cld-sample-2.jpg',
+      'https://res.cloudinary.com/demo/image/upload/landscape.jpg',
     ],
     amenities: [
       'Ski-In / Ski-Out Access',
@@ -127,9 +123,8 @@ const sampleHotels = [
     },
     starRating: 5,
     images: [
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517700/hotel-5_rwnkrv.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517701/hotel-5-gallery-1_cx66ty.jpg',
-      'https://res.cloudinary.com/dzb5izmbr/image/upload/v1741517702/hotel-5-gallery-2_op90lk.jpg',
+      'https://res.cloudinary.com/demo/image/upload/landscape.jpg',
+      'https://res.cloudinary.com/demo/image/upload/beach.jpg',
     ],
     amenities: [
       'Cliffside Sea Views',
@@ -168,4 +163,3 @@ const seedHotels = async () => {
 }
 
 seedHotels()
-

@@ -1,8 +1,7 @@
 import mongoose from 'mongoose'
 import Hotel from '../models/Hotel.js'
 
-// @desc    Get all active hotels
-// @route   GET /api/hotels
+// Get all active hotels
 export const getAllHotels = async (req, res) => {
   try {
     const hotels = await Hotel.find({ status: 'active' })
@@ -22,13 +21,11 @@ export const getAllHotels = async (req, res) => {
   }
 }
 
-// @desc    Get single hotel by its MongoDB ObjectId
-// @route   GET /api/hotels/:id
+// Get single hotel by its MongoDB ObjectId
 export const getHotelById = async (req, res) => {
   try {
     const { id } = req.params
 
-    // Validate MongoDB ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -38,7 +35,6 @@ export const getHotelById = async (req, res) => {
 
     const hotel = await Hotel.findById(id)
 
-    // Check if hotel exists
     if (!hotel) {
       return res.status(404).json({
         success: false,
@@ -60,8 +56,7 @@ export const getHotelById = async (req, res) => {
   }
 }
 
-// @desc    Get featured active hotels
-// @route   GET /api/hotels/featured
+// Get featured active hotels
 export const getFeaturedHotels = async (req, res) => {
   try {
     const hotels = await Hotel.find({ isFeatured: true, status: 'active' })
@@ -80,4 +75,3 @@ export const getFeaturedHotels = async (req, res) => {
     })
   }
 }
-

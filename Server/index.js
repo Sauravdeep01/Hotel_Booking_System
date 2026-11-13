@@ -27,13 +27,12 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/hotels', hotelRoutes)
 
-// Basic Error Handling Middleware
+// Error handling middleware
 app.use((err, req, res, _next) => {
   console.error('Server error:', err.stack || err.message)
   res.status(500).json({ error: 'Internal Server Error' })
 })
 
-// Start server first, then connect to MongoDB
 app.listen(PORT, async () => {
   console.log('Server running successfully')
   await connectDB()
