@@ -30,7 +30,6 @@ export default function Navbar() {
   const navLinks = [
     { label: 'Home', path: '/home' },
     { label: 'Hotels', path: '/hotels' },
-    { label: 'Experience', path: '/experience' },
     { label: 'About', path: '/about' },
   ]
 

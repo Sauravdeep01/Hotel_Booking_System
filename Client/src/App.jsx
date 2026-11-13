@@ -17,7 +17,6 @@ export default function App() {
       <Route path="/hotel/:id" element={<HotelDetails />} />
       <Route path="/offers" element={<Home />} />
       <Route path="/offers/:id" element={<Home />} />
-      <Route path="/experience" element={<Home />} />
       <Route path="/about" element={<About />} />
 
       {/* Auth redirects */}
