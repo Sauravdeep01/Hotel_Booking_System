@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useUser } from '@clerk/clerk-react'
+import { useUser, useAuth } from '@clerk/clerk-react'
 import {
   Calendar,
   MapPin,
@@ -29,6 +29,7 @@ import {
 
 export default function MyBookings() {
   const { user, isLoaded } = useUser()
+  const { getToken } = useAuth()
   const location = useLocation()
 
   const [bookings, setBookings] = useState([])
@@ -112,20 +113,28 @@ export default function MyBookings() {
     try {
       setIsCancelling(true)
       const bookingId = bookingToCancel._id || bookingToCancel.id
-      const res = await cancelBookingApi(bookingId)
+
+      let token = null
+      try {
+        token = await getToken()
+      } catch (tokenErr) {
+        console.warn('Could not retrieve Clerk auth token:', tokenErr)
+      }
+
+      const res = await cancelBookingApi(bookingId, user?.id, token)
 
       if (res.success) {
-        // Update local state to reflect cancellation and released room inventory
+        // Update local state immediately to reflect cancellation and released room inventory
         setBookings((prev) =>
           prev.map((b) =>
             (b._id === bookingId || b.id === bookingId)
-              ? { ...b, status: 'Cancelled', cancelledAt: new Date().toISOString() }
+              ? { ...b, status: 'cancelled', cancelledAt: new Date().toISOString() }
               : b
           )
         )
         setNotification({
-          type: 'info',
-          text: `Reservation for ${bookingToCancel.hotelName} has been cancelled. Room inventory has been released.`,
+          type: 'success',
+          text: `Reservation for ${bookingToCancel.hotelName} (Ref #${bookingId}) has been cancelled successfully. Room inventory has been released.`,
         })
         setTimeout(() => setNotification(null), 6000)
       } else {
@@ -322,18 +331,18 @@ export default function MyBookings() {
                       </span>
                       <span
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                          booking.status === 'Confirmed'
+                          (booking.status || '').toLowerCase() === 'confirmed'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : booking.status === 'Pending'
+                            : (booking.status || '').toLowerCase() === 'pending'
                               ? 'bg-amber-50 text-amber-700 border border-amber-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}
                       >
                         <span
                           className={`h-2 w-2 rounded-full ${
-                            booking.status === 'Confirmed'
+                            (booking.status || '').toLowerCase() === 'confirmed'
                               ? 'bg-emerald-500'
-                              : booking.status === 'Pending'
+                              : (booking.status || '').toLowerCase() === 'pending'
                                 ? 'bg-amber-500'
                                 : 'bg-rose-500'
                           }`}
@@ -353,7 +362,7 @@ export default function MyBookings() {
                         <span>View Details</span>
                       </button>
 
-                      {booking.status !== 'Cancelled' && (
+                      {(booking.status || '').toLowerCase() !== 'cancelled' && (booking.status || '').toLowerCase() !== 'completed' && (
                         <button
                           type="button"
                           onClick={() => setBookingToCancel(booking)}

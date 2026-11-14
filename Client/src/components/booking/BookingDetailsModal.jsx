@@ -49,9 +49,9 @@ export default function BookingDetailsModal({ booking, isOpen, onClose }) {
               <span className="text-slate-400 font-semibold uppercase text-[10px]">Booking:</span>
               <span
                 className={`px-2.5 py-1 rounded-full font-bold uppercase tracking-wider text-[10px] ${
-                  booking.status === 'Confirmed'
+                  booking.status?.toLowerCase() === 'confirmed'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : booking.status === 'Pending'
+                    : booking.status?.toLowerCase() === 'pending'
                       ? 'bg-amber-50 text-amber-700 border border-amber-200'
                       : 'bg-rose-50 text-rose-700 border border-rose-200'
                 }`}

@@ -151,19 +151,32 @@ export const getUserBookingsApi = async (userId) => {
 
 /**
  * Cancel a booking and release room availability in MongoDB
- * PATCH /api/bookings/:id/cancel
+ * PATCH /api/bookings/:bookingId/cancel
+ * Verifies Clerk authentication and booking ownership
  */
-export const cancelBookingApi = async (bookingId) => {
+export const cancelBookingApi = async (bookingId, userId = null, token = null) => {
   try {
     if (!bookingId) {
       return { success: false, message: 'Booking ID is required' }
     }
 
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    if (userId) {
+      headers['x-user-id'] = userId
+    }
+
     const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/cancel`, {
       method: 'PATCH',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
+      body: JSON.stringify({ userId }),
     })
 
     const data = await res.json()
@@ -180,6 +193,7 @@ export const cancelBookingApi = async (bookingId) => {
       ? {
           ...data.data,
           id: data.data._id || data.data.id,
+          status: data.data.status,
           checkIn: typeof data.data.checkIn === 'string' ? data.data.checkIn.split('T')[0] : data.data.checkIn,
           checkOut: typeof data.data.checkOut === 'string' ? data.data.checkOut.split('T')[0] : data.data.checkOut,
         }
@@ -187,6 +201,7 @@ export const cancelBookingApi = async (bookingId) => {
 
     return {
       success: true,
+      status: res.status,
       message: data.message || 'Booking cancelled successfully',
       data: updated,
     }

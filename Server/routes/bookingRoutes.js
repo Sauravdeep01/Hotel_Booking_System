@@ -6,6 +6,7 @@ import {
   cancelBooking,
   getBookingById,
 } from '../controllers/bookingController.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -19,8 +20,9 @@ router.post('/', createBooking)
 // Get all bookings for a user
 router.get('/user/:userId', getUserBookings)
 
-// Cancel a booking
-router.patch('/:id/cancel', cancelBooking)
+// Cancel a booking (PATCH /api/bookings/:bookingId/cancel) - requires Clerk authentication and ownership
+router.patch('/:bookingId/cancel', requireAuth, cancelBooking)
+router.patch('/:id/cancel', requireAuth, cancelBooking)
 
 // Get single booking by ID
 router.get('/:id', getBookingById)

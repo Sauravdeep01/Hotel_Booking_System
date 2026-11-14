@@ -86,11 +86,11 @@ export const calculateAvailability = async ({ hotelId, roomType, checkIn, checkO
 
   // Count active confirmed bookings that overlap with requested [checkIn, checkOut]
   // Overlap condition: booking.checkIn < requestedCheckOut && booking.checkOut > requestedCheckIn
-  // Cancelled bookings are explicitly excluded (Requirement 6)
+  // Cancelled bookings are explicitly excluded (Requirement 6 & 8)
   const overlappingBookings = await Booking.countDocuments({
     hotelId: hotel._id,
     roomType: targetRoom.roomType,
-    status: 'Confirmed',
+    status: { $in: ['Confirmed', 'confirmed'] },
     checkIn: { $lt: dCheckOut },
     checkOut: { $gt: dCheckIn },
   })
@@ -308,21 +308,38 @@ export const getUserBookings = async (req, res) => {
 
 /**
  * Controller: Cancel Booking
- * PATCH /api/bookings/:id/cancel
- * Cancelling sets status to Cancelled, which instantly releases room availability! (Requirement 6)
+ * PATCH /api/bookings/:bookingId/cancel
+ * Cancelling sets status to cancelled in MongoDB, releases room inventory, and preserves the record for history.
  */
 export const cancelBooking = async (req, res) => {
   try {
-    const { id } = req.params
+    const bookingId = req.params.bookingId || req.params.id
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // 1. Validate booking ID format
+    if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid booking ID format.',
       })
     }
 
-    const booking = await Booking.findById(id)
+    // 2. Verify authenticated user identity (from requireAuth middleware or request headers/body)
+    const authenticatedUserId =
+      req.auth?.userId ||
+      req.headers['x-user-id'] ||
+      req.headers['user-id'] ||
+      req.body?.userId ||
+      req.query?.userId
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please sign in to cancel this reservation.',
+      })
+    }
+
+    // 3. Find booking by ID in MongoDB
+    const booking = await Booking.findById(bookingId)
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -330,21 +347,41 @@ export const cancelBooking = async (req, res) => {
       })
     }
 
-    if (booking.status === 'Cancelled') {
-      return res.status(200).json({
-        success: true,
-        message: 'Booking is already cancelled.',
+    // 4. Verify ownership: users can cancel only their own bookings
+    if (booking.userId !== authenticatedUserId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You are not authorized to cancel this booking.',
+      })
+    }
+
+    // 5. Check if booking is already cancelled or completed
+    const currentStatus = (booking.status || '').toLowerCase()
+
+    if (currentStatus === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'This booking is already cancelled.',
         data: booking,
       })
     }
 
-    booking.status = 'Cancelled'
+    if (currentStatus === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel a booking that has already been completed.',
+        data: booking,
+      })
+    }
+
+    // 6. Update booking status to cancelled and preserve for booking history (do not delete)
+    booking.status = 'cancelled'
     booking.cancelledAt = new Date()
     await booking.save()
 
     res.status(200).json({
       success: true,
-      message: `Booking #${booking._id} has been cancelled successfully and room inventory has been released.`,
+      message: 'Booking cancelled successfully.',
       data: booking,
     })
   } catch (error) {
