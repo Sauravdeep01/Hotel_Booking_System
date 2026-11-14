@@ -10,22 +10,26 @@ import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// Check room availability (Supports GET with query params and POST with body)
+// Check room availability (Public - Supports GET with query params and POST with body)
 router.get('/availability', checkRoomAvailability)
 router.post('/availability', checkRoomAvailability)
 
-// Create a new booking (rechecks availability on backend)
-router.post('/', createBooking)
+// Protected Operations: Strictly authenticated and authorized via verified Clerk JWT
 
-// Get all bookings for a user
-router.get('/user/:userId', getUserBookings)
+// Create a new booking (Protected - associates strictly with authenticated user)
+router.post('/', requireAuth, createBooking)
 
-// Cancel a booking (PATCH /api/bookings/:bookingId/cancel) - requires Clerk authentication and ownership
+// View My Bookings (Protected - fetches only the authenticated user's bookings)
+router.get('/my-bookings', requireAuth, getUserBookings)
+router.get('/user/:userId', requireAuth, getUserBookings)
+
+// Cancel a booking (Protected - verifies booking ownership)
 router.patch('/:bookingId/cancel', requireAuth, cancelBooking)
 router.patch('/:id/cancel', requireAuth, cancelBooking)
 
-// Get single booking by ID
-router.get('/:id', getBookingById)
+// View individual booking details (Protected - verifies booking ownership)
+router.get('/:bookingId', requireAuth, getBookingById)
+router.get('/:id', requireAuth, getBookingById)
 
 export default router
 

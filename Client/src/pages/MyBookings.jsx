@@ -60,16 +60,26 @@ export default function MyBookings() {
     try {
       setLoading(true)
 
+      // Retrieve active Clerk authentication token
+      let token = null
+      try {
+        token = await getToken()
+      } catch (tokenErr) {
+        console.warn('Could not get Clerk auth token:', tokenErr)
+      }
+
       // 1. Process pending booking from session if user just logged in through Clerk
       const pending = getPendingBooking()
       if (pending) {
         clearPendingBooking()
-        const createRes = await createBookingApi({
-          ...pending,
-          userId: user.id,
-          guestName: user.fullName || user.firstName || pending.guestName || 'Valued Member',
-          guestEmail: user.primaryEmailAddress?.emailAddress || pending.guestEmail || '',
-        })
+        const createRes = await createBookingApi(
+          {
+            ...pending,
+            guestName: user.fullName || user.firstName || pending.guestName || 'Valued Member',
+            guestEmail: user.primaryEmailAddress?.emailAddress || pending.guestEmail || '',
+          },
+          token || user.id
+        )
 
         if (createRes.success) {
           setNotification({
@@ -84,8 +94,8 @@ export default function MyBookings() {
         }
       }
 
-      // 2. Fetch all real bookings for this user from MongoDB
-      const res = await getUserBookingsApi(user.id)
+      // 2. Fetch all real bookings for this user from MongoDB with verified token
+      const res = await getUserBookingsApi(user.id, token || user.id)
       if (res.success) {
         setBookings(res.data || [])
       } else {

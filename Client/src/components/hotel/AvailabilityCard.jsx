@@ -31,7 +31,7 @@ export default function AvailabilityCard({
   onRoomRequired,
 }) {
   const navigate = useNavigate()
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, getToken } = useAuth()
   const { user } = useUser()
   const { openSignIn } = useClerk()
 
@@ -261,10 +261,14 @@ export default function AvailabilityCard({
       // Authenticated user: persist directly to MongoDB via API with backend availability recheck
       setIsBooking(true)
       try {
-        const res = await createBookingApi({
-          ...bookingPayload,
-          userId: user.id,
-        })
+        let token = null
+        try {
+          token = await getToken()
+        } catch (e) {
+          console.warn('Could not get Clerk auth token:', e)
+        }
+
+        const res = await createBookingApi(bookingPayload, token || user.id)
 
         if (res.success) {
           navigate('/my-bookings', {

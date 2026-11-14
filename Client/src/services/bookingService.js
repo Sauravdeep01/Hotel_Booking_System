@@ -60,15 +60,24 @@ export const checkRoomAvailabilityApi = async ({ hotelId, roomType, checkIn, che
 /**
  * Create a new confirmed booking in MongoDB
  * POST /api/bookings
+ * Authenticated with Clerk Bearer token
  */
-export const createBookingApi = async (bookingPayload) => {
+export const createBookingApi = async (bookingPayload, token = null) => {
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    } else if (bookingPayload?.userId) {
+      headers['Authorization'] = `Bearer ${bookingPayload.userId}`
+    }
+
     const res = await fetch(`${API_BASE_URL}/bookings`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers,
       body: JSON.stringify(bookingPayload),
     })
 
@@ -100,19 +109,28 @@ export const createBookingApi = async (bookingPayload) => {
 
 /**
  * Fetch all bookings for an authenticated user from MongoDB
- * GET /api/bookings/user/:userId
+ * GET /api/bookings/my-bookings or GET /api/bookings/user/:userId
+ * Authenticated with Clerk Bearer token
  */
-export const getUserBookingsApi = async (userId) => {
+export const getUserBookingsApi = async (userId, token = null) => {
   try {
     if (!userId) {
       return { success: false, message: 'User ID is required', data: [] }
     }
 
+    const headers = {
+      'Accept': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    } else {
+      headers['Authorization'] = `Bearer ${userId}`
+    }
+
     const res = await fetch(`${API_BASE_URL}/bookings/user/${encodeURIComponent(userId)}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
     })
 
     const data = await res.json()
@@ -217,16 +235,23 @@ export const cancelBookingApi = async (bookingId, userId = null, token = null) =
 /**
  * Get single booking by ID
  * GET /api/bookings/:id
+ * Protected with Clerk Bearer token
  */
-export const getBookingByIdApi = async (bookingId) => {
+export const getBookingByIdApi = async (bookingId, token = null) => {
   try {
     if (!bookingId) return { success: false, message: 'Booking ID is required' }
 
+    const headers = {
+      'Accept': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
     })
 
     const data = await res.json()

@@ -168,12 +168,21 @@ export const checkRoomAvailability = async (req, res) => {
 /**
  * Controller: Create Booking
  * POST /api/bookings
- * Re-checks availability on the backend to prevent race-condition double bookings (Requirement 12 & 13)
+ * Re-checks availability on the backend to prevent race-condition double bookings.
+ * Strictly assigns booking to authenticated Clerk user (never trusting body userId).
  */
 export const createBooking = async (req, res) => {
   try {
+    const authenticatedUserId = req.auth?.userId
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please sign in to create a booking.',
+      })
+    }
+
     const {
-      userId,
       hotelId,
       roomType,
       checkIn,
@@ -182,13 +191,6 @@ export const createBooking = async (req, res) => {
       guestName,
       guestEmail,
     } = req.body
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID is required to create a booking.',
-      })
-    }
 
     // 1. Recheck availability on the backend
     const availability = await calculateAvailability({
@@ -237,8 +239,9 @@ export const createBooking = async (req, res) => {
           ''
         : hotel.location || ''
 
+    // Securely associate with verified authenticatedUserId (never body userId)
     const newBooking = await Booking.create({
-      userId,
+      userId: authenticatedUserId,
       hotelId: hotel._id,
       hotelName: hotel.name,
       hotelImage: primaryImage,
@@ -275,21 +278,32 @@ export const createBooking = async (req, res) => {
 }
 
 /**
- * Controller: Get Bookings for a User
+ * Controller: Get Bookings for Authenticated User
+ * GET /api/bookings/my-bookings
  * GET /api/bookings/user/:userId
+ * Ensures users can only fetch their own bookings.
  */
 export const getUserBookings = async (req, res) => {
   try {
-    const { userId } = req.params
+    const authenticatedUserId = req.auth?.userId
 
-    if (!userId) {
-      return res.status(400).json({
+    if (!authenticatedUserId) {
+      return res.status(401).json({
         success: false,
-        message: 'User ID is required.',
+        message: 'Authentication required to view bookings.',
       })
     }
 
-    const bookings = await Booking.find({ userId }).sort({ createdAt: -1 })
+    // Never trust URL param userId blindly: verify it matches authenticated user
+    if (req.params.userId && req.params.userId !== authenticatedUserId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You are not authorized to view another user’s bookings.',
+      })
+    }
+
+    // Always query MongoDB strictly using the verified authenticated user ID
+    const bookings = await Booking.find({ userId: authenticatedUserId }).sort({ createdAt: -1 })
 
     res.status(200).json({
       success: true,
@@ -309,10 +323,20 @@ export const getUserBookings = async (req, res) => {
 /**
  * Controller: Cancel Booking
  * PATCH /api/bookings/:bookingId/cancel
+ * Verifies ownership using authenticated Clerk user ID.
  * Cancelling sets status to cancelled in MongoDB, releases room inventory, and preserves the record for history.
  */
 export const cancelBooking = async (req, res) => {
   try {
+    const authenticatedUserId = req.auth?.userId
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please sign in to cancel this reservation.',
+      })
+    }
+
     const bookingId = req.params.bookingId || req.params.id
 
     // 1. Validate booking ID format
@@ -323,27 +347,20 @@ export const cancelBooking = async (req, res) => {
       })
     }
 
-    // 2. Verify authenticated user identity (from requireAuth middleware or request headers/body)
-    const authenticatedUserId =
-      req.auth?.userId ||
-      req.headers['x-user-id'] ||
-      req.headers['user-id'] ||
-      req.body?.userId ||
-      req.query?.userId
-
-    if (!authenticatedUserId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required. Please sign in to cancel this reservation.',
-      })
-    }
-
-    // 3. Find booking by ID in MongoDB
+    // 2. Find booking by ID in MongoDB
     const booking = await Booking.findById(bookingId)
     if (!booking) {
       return res.status(404).json({
         success: false,
         message: 'Booking not found.',
+      })
+    }
+
+    // 3. Handle legacy bookings that may not have a userId safely
+    if (!booking.userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. This legacy booking cannot be verified.',
       })
     }
 
@@ -397,23 +414,50 @@ export const cancelBooking = async (req, res) => {
 /**
  * Controller: Get Single Booking
  * GET /api/bookings/:id
+ * Verifies booking ownership: Users can view only their own booking details.
+ * Prevents exposing private booking details to unauthorized users (returns 403 Forbidden).
  */
 export const getBookingById = async (req, res) => {
   try {
-    const { id } = req.params
+    const authenticatedUserId = req.auth?.userId
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required to view booking details.',
+      })
+    }
+
+    const bookingId = req.params.bookingId || req.params.id
+
+    if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid booking ID format.',
       })
     }
 
-    const booking = await Booking.findById(id)
+    const booking = await Booking.findById(bookingId)
     if (!booking) {
       return res.status(404).json({
         success: false,
         message: 'Booking not found.',
+      })
+    }
+
+    // Handle legacy bookings without userId safely
+    if (!booking.userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. This legacy booking cannot be verified.',
+      })
+    }
+
+    // Verify booking ownership on backend: return 403 Forbidden without leaking details
+    if (booking.userId !== authenticatedUserId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You are not authorized to view this booking.',
       })
     }
 
