@@ -4,6 +4,7 @@ import Hotels from './pages/Hotels'
 import HotelDetails from './pages/HotelDetails'
 import About from './pages/About'
 import MyBookings from './pages/MyBookings'
+import Payment from './pages/Payment'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
@@ -39,6 +40,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <MyBookings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/:bookingId"
+        element={
+          <ProtectedRoute>
+            <Payment />
           </ProtectedRoute>
         }
       />

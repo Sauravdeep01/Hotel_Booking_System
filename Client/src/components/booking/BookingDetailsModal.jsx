@@ -44,7 +44,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose }) {
         </div>
 
         <div className="p-6 overflow-y-auto space-y-5 text-[#142B45] text-xs">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400 font-semibold uppercase text-[10px]">Booking:</span>
               <span
@@ -57,6 +57,25 @@ export default function BookingDetailsModal({ booking, isOpen, onClose }) {
                 }`}
               >
                 {booking.status}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 font-semibold uppercase text-[10px]">Payment:</span>
+              <span
+                className={`px-2.5 py-1 rounded-full font-bold uppercase tracking-wider text-[10px] ${
+                  booking.paymentStatus === 'paid'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : booking.paymentStatus === 'failed'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {booking.paymentStatus === 'paid'
+                  ? 'Paid'
+                  : booking.paymentStatus === 'failed'
+                    ? 'Failed'
+                    : 'Pending'}
               </span>
             </div>
           </div>

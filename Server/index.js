@@ -4,6 +4,7 @@ import cors from 'cors'
 import connectDB from './config/db.js'
 import hotelRoutes from './routes/hotelRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -43,6 +44,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/hotels', hotelRoutes)
 app.use('/api/bookings', bookingRoutes)
+app.use('/api/payments', paymentRoutes)
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

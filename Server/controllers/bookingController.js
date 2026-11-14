@@ -258,6 +258,7 @@ export const createBooking = async (req, res) => {
       taxes,
       totalAmount,
       status: 'Confirmed',
+      paymentStatus: 'pending',
       guestName: guestName || 'Valued Guest',
       guestEmail: guestEmail || '',
     })

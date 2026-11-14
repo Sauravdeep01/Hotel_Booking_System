@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   Hotel as HotelIcon,
   Loader2,
+  CreditCard,
+  Clock,
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
@@ -35,6 +37,14 @@ export default function MyBookings() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState(() => {
+    if (location.state?.paymentSuccess) {
+      return {
+        type: 'success',
+        text: `Payment successful! Your reservation for ${
+          location.state.hotelName || 'your hotel'
+        } has been marked as Paid.`,
+      }
+    }
     if (location.state?.newBookingSuccess) {
       return {
         type: 'success',
@@ -114,7 +124,57 @@ export default function MyBookings() {
     } else if (isLoaded && !user) {
       setLoading(false)
     }
-  }, [user?.id, isLoaded])
+  }, [user?.id, isLoaded, location.key])
+
+  // Handle redirect feedback from payment or booking confirmation and update UI immediately
+  useEffect(() => {
+    if (location.state?.paymentSuccess) {
+      const { bookingId, hotelName, updatedBooking } = location.state
+      setNotification({
+        type: 'success',
+        text: `Payment successful! Your reservation for ${
+          hotelName || updatedBooking?.hotelName || 'your hotel'
+        } has been marked as Paid.`,
+      })
+
+      // Immediately reflect PAID status in local state without waiting for network
+      if (bookingId) {
+        setBookings((prev) =>
+          prev.map((b) => {
+            const bId = b._id || b.id
+            if (bId === bookingId) {
+              return {
+                ...b,
+                ...(updatedBooking || {}),
+                paymentStatus: 'paid',
+                paidAt: updatedBooking?.paidAt || new Date().toISOString(),
+              }
+            }
+            return b
+          })
+        )
+      }
+
+      // Re-fetch bookings from MongoDB to sync backend data
+      if (user?.id) {
+        loadBookings()
+      }
+
+      // Clean history state so browser reload doesn't trigger notification repeatedly
+      window.history.replaceState({}, document.title)
+    } else if (location.state?.newBookingSuccess) {
+      setNotification({
+        type: 'success',
+        text: `Booking confirmed! Your reservation for ${
+          location.state.hotelName || 'your hotel'
+        } has been secured successfully.`,
+      })
+      if (user?.id) {
+        loadBookings()
+      }
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.key, location.state])
 
   // Confirm and persist reservation cancellation in MongoDB
   const handleConfirmCancel = async () => {
@@ -334,13 +394,11 @@ export default function MyBookings() {
                   </div>
 
                   {/* Column 3: Payment & Status */}
-                  <div className="md:col-span-3 flex flex-row md:flex-col sm:items-start justify-between md:justify-center gap-3.5 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block md:hidden mb-1">
-                        Status
-                      </span>
+                  <div className="md:col-span-3 flex flex-row md:flex-col sm:items-start justify-between md:justify-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Reservation Status Badge */}
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                           (booking.status || '').toLowerCase() === 'confirmed'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : (booking.status || '').toLowerCase() === 'pending'
@@ -359,29 +417,68 @@ export default function MyBookings() {
                         />
                         {booking.status}
                       </span>
+
+                      {/* Payment Status Badge */}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                          booking.paymentStatus === 'paid'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : booking.paymentStatus === 'failed'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                        }`}
+                      >
+                        {booking.paymentStatus === 'paid' ? (
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                        ) : booking.paymentStatus === 'failed' ? (
+                          <AlertCircle className="h-3 w-3 text-rose-600" />
+                        ) : (
+                          <Clock className="h-3 w-3 text-amber-600" />
+                        )}
+                        <span>
+                          {booking.paymentStatus === 'paid'
+                            ? 'Paid'
+                            : booking.paymentStatus === 'failed'
+                              ? 'Failed'
+                              : 'Pending'}
+                        </span>
+                      </span>
                     </div>
 
-                    {/* Action buttons: "View Details" and "Cancel Booking" */}
+                    {/* Action buttons: Pay Now (for pending bookings), View Details, and Cancel */}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {/* Pay Now button: only shown for uncancelled, unpaid bookings */}
+                      {(booking.status || '').toLowerCase() !== 'cancelled' &&
+                        booking.paymentStatus !== 'paid' && (
+                          <Link
+                            to={`/payment/${booking.id || booking._id}`}
+                            className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-[#C6A15B] hover:bg-[#b58f4a] text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+                          >
+                            <CreditCard className="h-3.5 w-3.5" />
+                            <span>Pay Now</span>
+                          </Link>
+                        )}
+
                       <button
                         type="button"
                         onClick={() => setSelectedBookingForDetails(booking)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:border-[#142B45] text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-[#142B45] text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs"
                       >
                         <Eye className="h-3.5 w-3.5 text-slate-500" />
                         <span>View Details</span>
                       </button>
 
-                      {(booking.status || '').toLowerCase() !== 'cancelled' && (booking.status || '').toLowerCase() !== 'completed' && (
-                        <button
-                          type="button"
-                          onClick={() => setBookingToCancel(booking)}
-                          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all active:scale-95 cursor-pointer"
-                        >
-                          <XCircle className="h-3.5 w-3.5" />
-                          <span>Cancel Booking</span>
-                        </button>
-                      )}
+                      {(booking.status || '').toLowerCase() !== 'cancelled' &&
+                        (booking.status || '').toLowerCase() !== 'completed' && (
+                          <button
+                            type="button"
+                            onClick={() => setBookingToCancel(booking)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all active:scale-95 cursor-pointer"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            <span>Cancel</span>
+                          </button>
+                        )}
                     </div>
                   </div>
                 </div>

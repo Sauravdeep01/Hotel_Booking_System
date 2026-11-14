@@ -83,6 +83,34 @@ const bookingSchema = new mongoose.Schema(
       default: 'Confirmed',
       index: true,
     },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed'],
+      default: 'pending',
+      index: true,
+    },
+    paymentMethod: {
+      type: String,
+      default: 'Razorpay Test',
+    },
+    razorpayOrderId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
+    },
+    paidAt: {
+      type: Date,
+      default: null,
+    },
     guestName: {
       type: String,
       default: 'Valued Guest',
