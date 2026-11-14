@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import {
   Calendar,
@@ -12,89 +12,138 @@ import {
   AlertCircle,
   CheckCircle2,
   Hotel as HotelIcon,
+  Loader2,
 } from 'lucide-react'
 import Navbar from '../components/common/Navbar'
 import Footer from '../components/common/Footer'
 import BookingDetailsModal from '../components/booking/BookingDetailsModal'
 import {
-  getUserBookings,
-  createBooking,
-  cancelBooking,
+  getUserBookingsApi,
+  createBookingApi,
+  cancelBookingApi,
+} from '../services/bookingService'
+import {
   getPendingBooking,
   clearPendingBooking,
 } from '../utils/bookingStorage'
 
 export default function MyBookings() {
-  const { user } = useUser()
-  const [loadedUserId, setLoadedUserId] = useState(user?.id || null)
+  const { user, isLoaded } = useUser()
+  const location = useLocation()
+
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState(() => {
-    if (user?.id) {
-      const pending = getPendingBooking()
-      if (pending) {
-        return {
-          type: 'success',
-          text: `Booking confirmed! Your reservation for ${pending.hotelName} has been booked successfully.`,
-        }
+    if (location.state?.newBookingSuccess) {
+      return {
+        type: 'success',
+        text: `Booking confirmed! Your reservation for ${
+          location.state.hotelName || 'your hotel'
+        } has been secured successfully.`,
       }
     }
     return null
   })
 
-  const [bookings, setBookings] = useState(() => {
-    if (user?.id) {
-      const pending = getPendingBooking()
-      if (pending) {
-        createBooking(user.id, pending)
-        clearPendingBooking()
-      }
-      return getUserBookings(
-        user.id,
-        user.fullName || user.firstName || 'Valued Member',
-        user.primaryEmailAddress?.emailAddress || 'member@stayease.com'
-      )
-    }
-    return []
-  })
-
-  // Sync bookings when authenticated user loads or changes
-  if (user?.id && user.id !== loadedUserId) {
-    setLoadedUserId(user.id)
-    const pending = getPendingBooking()
-    if (pending) {
-      createBooking(user.id, pending)
-      clearPendingBooking()
-      setNotification({
-        type: 'success',
-        text: `Booking confirmed! Your reservation for ${pending.hotelName} has been booked successfully.`,
-      })
-    }
-    setBookings(
-      getUserBookings(
-        user.id,
-        user.fullName || user.firstName || 'Valued Member',
-        user.primaryEmailAddress?.emailAddress || 'member@stayease.com'
-      )
-    )
-  }
-
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState(null)
   const [bookingToCancel, setBookingToCancel] = useState(null)
+  const [isCancelling, setIsCancelling] = useState(false)
 
-  // Confirm and persist reservation cancellation
-  const handleConfirmCancel = () => {
-    if (!user || !bookingToCancel) return
-    const updated = cancelBooking(user.id, bookingToCancel.id)
-    if (updated) {
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingToCancel.id ? updated : b))
-      )
-      setNotification({
-        type: 'info',
-        text: `Reservation #${bookingToCancel.id} for ${bookingToCancel.hotelName} has been cancelled.`,
-      })
-      setTimeout(() => setNotification(null), 5000)
+  // Fetch real user bookings from MongoDB API and process any pending post-auth bookings
+  const loadBookings = async () => {
+    if (!user?.id) {
+      setLoading(false)
+      return
     }
-    setBookingToCancel(null)
+
+    try {
+      setLoading(true)
+
+      // 1. Process pending booking from session if user just logged in through Clerk
+      const pending = getPendingBooking()
+      if (pending) {
+        clearPendingBooking()
+        const createRes = await createBookingApi({
+          ...pending,
+          userId: user.id,
+          guestName: user.fullName || user.firstName || pending.guestName || 'Valued Member',
+          guestEmail: user.primaryEmailAddress?.emailAddress || pending.guestEmail || '',
+        })
+
+        if (createRes.success) {
+          setNotification({
+            type: 'success',
+            text: `Booking confirmed! Your reservation for ${pending.hotelName} has been booked successfully in MongoDB.`,
+          })
+        } else {
+          setNotification({
+            type: 'error',
+            text: createRes.message || 'Could not complete pending booking.',
+          })
+        }
+      }
+
+      // 2. Fetch all real bookings for this user from MongoDB
+      const res = await getUserBookingsApi(user.id)
+      if (res.success) {
+        setBookings(res.data || [])
+      } else {
+        console.error('Failed to load bookings:', res.message)
+      }
+    } catch (err) {
+      console.error('Error fetching user bookings:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isLoaded && user?.id) {
+      loadBookings()
+    } else if (isLoaded && !user) {
+      setLoading(false)
+    }
+  }, [user?.id, isLoaded])
+
+  // Confirm and persist reservation cancellation in MongoDB
+  const handleConfirmCancel = async () => {
+    if (!bookingToCancel) return
+
+    try {
+      setIsCancelling(true)
+      const bookingId = bookingToCancel._id || bookingToCancel.id
+      const res = await cancelBookingApi(bookingId)
+
+      if (res.success) {
+        // Update local state to reflect cancellation and released room inventory
+        setBookings((prev) =>
+          prev.map((b) =>
+            (b._id === bookingId || b.id === bookingId)
+              ? { ...b, status: 'Cancelled', cancelledAt: new Date().toISOString() }
+              : b
+          )
+        )
+        setNotification({
+          type: 'info',
+          text: `Reservation for ${bookingToCancel.hotelName} has been cancelled. Room inventory has been released.`,
+        })
+        setTimeout(() => setNotification(null), 6000)
+      } else {
+        setNotification({
+          type: 'error',
+          text: res.message || 'Failed to cancel reservation.',
+        })
+      }
+    } catch (err) {
+      console.error('Cancellation error:', err)
+      setNotification({
+        type: 'error',
+        text: 'Error processing cancellation. Please try again.',
+      })
+    } finally {
+      setIsCancelling(false)
+      setBookingToCancel(null)
+    }
   }
 
   return (
@@ -165,25 +214,29 @@ export default function MyBookings() {
           </div>
         )}
 
-        {bookings.length > 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200 shadow-xs mt-8 max-w-2xl mx-auto flex flex-col items-center">
+            <Loader2 className="h-8 w-8 text-[#C6A15B] animate-spin mb-3" />
+            <p className="text-sm font-semibold text-[#142B45]">Loading your reservations from MongoDB...</p>
+          </div>
+        ) : bookings.length > 0 ? (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden mt-8 max-w-6xl mx-auto">
             {/* Table Header: Only three main column headings */}
             <div className="hidden md:grid grid-cols-12 gap-6 px-6 sm:px-8 py-4 bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
               <div className="col-span-6">Hotels</div>
               <div className="col-span-3">Date & Timings</div>
-              <div className="col-span-3">Payment</div>
+              <div className="col-span-3">Payment & Status</div>
             </div>
 
             {/* Bookings rows with clearly visible light-grey horizontal divider */}
             <div className="divide-y divide-slate-200">
               {bookings.map((booking) => (
                 <div
-                  key={booking.id}
+                  key={booking.id || booking._id}
                   className="grid grid-cols-1 md:grid-cols-12 gap-6 px-5 sm:px-8 py-6 sm:py-7 items-center hover:bg-slate-50/60 transition-colors"
                 >
                   {/* Column 1: Hotels */}
                   <div className="md:col-span-6 flex items-start sm:items-center gap-4 sm:gap-5 min-w-0">
-                    {/* Hotel Thumbnail: around 150 x 100px */}
                     <img
                       src={booking.hotelImage}
                       alt={booking.hotelName}
@@ -201,7 +254,7 @@ export default function MyBookings() {
                       </h3>
 
                       <p className="text-xs sm:text-sm font-semibold text-[#C6A15B] leading-tight truncate">
-                        {booking.roomType || 'Standard Suite'}
+                        {booking.roomName || booking.roomType || 'Standard Room'}
                       </p>
 
                       <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -261,11 +314,11 @@ export default function MyBookings() {
                     </div>
                   </div>
 
-                  {/* Column 3: Payment */}
+                  {/* Column 3: Payment & Status */}
                   <div className="md:col-span-3 flex flex-row md:flex-col sm:items-start justify-between md:justify-center gap-3.5 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block md:hidden mb-1">
-                        Payment
+                        Status
                       </span>
                       <span
                         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
@@ -289,7 +342,7 @@ export default function MyBookings() {
                       </span>
                     </div>
 
-                    {/* Action buttons: Only "View Details" and "Cancel Booking" */}
+                    {/* Action buttons: "View Details" and "Cancel Booking" */}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
                       <button
                         type="button"
@@ -327,7 +380,7 @@ export default function MyBookings() {
             </h3>
 
             <p className="text-slate-500 text-sm max-w-md font-light leading-relaxed mb-6">
-              You currently have no reservations. Explore our curated destinations and book an extraordinary getaway with StayEase.
+              You currently have no reservations in MongoDB. Explore our curated destinations and book an extraordinary getaway with StayEase.
             </p>
 
             <Link
@@ -361,23 +414,32 @@ export default function MyBookings() {
             </h3>
 
             <p className="text-xs text-slate-500 leading-relaxed mb-6">
-              Are you sure you want to cancel your reservation for <span className="font-bold text-[#142B45]">{bookingToCancel.hotelName}</span> (Ref #{bookingToCancel.id})? This action will mark your booking as cancelled.
+              Are you sure you want to cancel your reservation for <span className="font-bold text-[#142B45]">{bookingToCancel.hotelName}</span> (Ref #{bookingToCancel._id || bookingToCancel.id})? Cancelling will release room inventory back to the property.
             </p>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
+                disabled={isCancelling}
                 onClick={() => setBookingToCancel(null)}
-                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
               >
                 Keep Booking
               </button>
               <button
                 type="button"
+                disabled={isCancelling}
                 onClick={handleConfirmCancel}
-                className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md transition-colors cursor-pointer"
+                className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                Yes, Cancel
+                {isCancelling ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <span>Yes, Cancel</span>
+                )}
               </button>
             </div>
           </div>

@@ -3,14 +3,30 @@ import express from 'express'
 import cors from 'cors'
 import connectDB from './config/db.js'
 import hotelRoutes from './routes/hotelRoutes.js'
+import bookingRoutes from './routes/bookingRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+].filter(Boolean)
+
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or Postman)
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true)
+      }
+      return callback(null, true) // Allow in dev/preview
+    },
     credentials: true,
   })
 )
@@ -26,6 +42,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/api/hotels', hotelRoutes)
+app.use('/api/bookings', bookingRoutes)
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

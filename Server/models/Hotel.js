@@ -38,6 +38,11 @@ const roomTypeSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    totalRooms: {
+      type: Number,
+      default: 5,
+      min: 1,
+    },
   },
   { _id: false }
 )
